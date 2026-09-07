@@ -66,4 +66,15 @@ if realm == "server" then
     end
 end
 
+-- spec: No false MCP-ready UX — the client must default to disconnected.
+if realm == "client" then
+    if AI_PLAYERS.CompanionStatus ~= AI_PLAYERS.CompanionState.DISCONNECTED then
+        io.stderr:write(string.format(
+            "client must default CompanionStatus to disconnected, got %s\n",
+            tostring(AI_PLAYERS.CompanionStatus)
+        ))
+        os.exit(1)
+    end
+end
+
 print("ok: " .. realm .. " boot")
