@@ -10,6 +10,8 @@ speak to it.
 from __future__ import annotations
 
 from mcp.server.fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from ai_players_companion.agents.registry import AgentRegistry
 from ai_players_companion.mcp.catalog import (
@@ -19,6 +21,7 @@ from ai_players_companion.mcp.catalog import (
 )
 from ai_players_companion.mcp.session import SessionTracker
 from ai_players_companion.mcp.tools import register_management_tools
+from ai_players_companion.protocol import PROTOCOL_VERSION
 
 # Matches the proposed URL in ADR-005 and the in-game popup. Never pass
 # host="0.0.0.0" here for the MVP default: the Companion is a local,
@@ -59,4 +62,10 @@ def build_server(
         tool_names=catalog,
         agent_names=[record.name for record in registry.list_agents()],
     )
+
+    @app.custom_route("/health", methods=["GET"])
+    async def health(_request: Request) -> JSONResponse:
+        """Handshake field for the in-game popup: protocol version and session presence."""
+        return JSONResponse({"protocol_version": PROTOCOL_VERSION, "connected": session.is_connected})
+
     return app
