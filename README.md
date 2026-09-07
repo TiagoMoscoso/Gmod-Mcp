@@ -73,16 +73,22 @@ How Workshop-only users obtain the Companion remains **Open**. See [OQ-DIST-002]
 - Arbitrary Lua/shell execution exposed to agents
 - Shipping voice STT/TTS in the first vertical slice
 
-## Proposed monorepo (not created yet)
+## Created skeleton
 
 ```text
 gmod-ai-players/
 ├── docs/
 ├── addon/          → Workshop GMA candidate
-├── native/         → future voice module
+├── native/         → future voice module (not yet created)
 ├── companion/      → MCP host (GitHub)
 └── tests/
 ```
+
+The trees above exist, but MCP hosting and gameplay are not implemented yet:
+`addon/` autorun loads without spawning an AI NPC or claiming MCP is online,
+and `companion/` runs a process that prints its protocol version and exits
+without hosting MCP. See [companion-mcp-host](openspec/changes/companion-mcp-host)
+and [gmod-addon-skeleton](openspec/changes/gmod-addon-skeleton) for that work.
 
 ## Contributing
 
