@@ -1,0 +1,8 @@
+# Codex in this repo should run like Claude Code / Cursor Agent:
+# execute tools without pausing for every command or sandbox escape.
+# Requires the project to be trusted in ~/.codex/config.toml
+# ([projects."<abs-path>"].trust_level = "trusted").
+
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+web_search = "live"
