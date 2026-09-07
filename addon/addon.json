@@ -1,0 +1,9 @@
+{
+    "title": "GMod AI Players",
+    "type": "tool",
+    "tags": ["fun", "roleplay"],
+    "ignore": [
+        "*.psd",
+        "*.xcf"
+    ]
+}
