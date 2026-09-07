@@ -6,7 +6,7 @@
 ## 2. GLua addon skeleton
 
 - [x] 2.1 Add `addon/addon.json` with provisional title "GMod AI Players", type, and tags and verify the JSON parses and includes the fields `gmad` expects
-- [ ] 2.2 Add `addon/lua/autorun` client/server stubs that include `lua/ai_players/` and verify the files exist at engine-conventional paths (`lua/autorun/*.lua`)
+- [x] 2.2 Add `addon/lua/autorun` client/server stubs that include `lua/ai_players/` and verify the files exist at engine-conventional paths (`lua/autorun/*.lua`)
 - [ ] 2.3 Add `addon/lua/ai_players/shared/protocol.lua` exporting `AI_PLAYERS_PROTOCOL_VERSION = "1"` and verify a grep of the addon tree finds that exact string
 - [ ] 2.4 Confirm autorun does not open an MCP-online popup or print a live endpoint and verify no UI/net message in the skeleton claims MCP is ready
 
