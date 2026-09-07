@@ -2,7 +2,7 @@
 
 - [x] 1.1 Time-box SPK-MCP-001: stand up Streamable HTTP `/mcp` with the official Python MCP SDK or FastMCP and verify MCP Inspector (or equivalent generic client) can connect on `127.0.0.1`
 - [x] 1.2 If Streamable HTTP fails, record stdio-vs-HTTP outcome in `docs/architecture/companion.md` and verify the written decision states which flavor the MVP Companion uses
-- [ ] 1.3 Bind the chosen listener to `127.0.0.1` (proposed port 8765) by default and verify it is not listening on `0.0.0.0`
+- [x] 1.3 Bind the chosen listener to `127.0.0.1` (proposed port 8765) by default and verify it is not listening on `0.0.0.0`
 
 ## 2. Mock registry and management tools
 
