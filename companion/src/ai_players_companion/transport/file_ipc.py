@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import threading
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,8 @@ from ai_players_companion.protocol import (
     TYPE_HELLO,
     TYPE_HELLO_OK,
     TYPE_HELLO_REJECT,
+    TYPE_OBSERVE_REQUEST,
+    TYPE_OBSERVE_RESULT,
     TYPE_REGISTRY_REMOVE,
     TYPE_REGISTRY_UPSERT,
     envelope,
@@ -86,6 +89,14 @@ class BridgePaths:
     def event_path(self) -> Path:
         return self.gmod_out / "event.json"
 
+    @property
+    def observe_request_path(self) -> Path:
+        return self.companion_out / "observe_request.json"
+
+    @property
+    def observe_result_path(self) -> Path:
+        return self.gmod_out / "observe_result.json"
+
     def ensure(self) -> None:
         self.gmod_out.mkdir(parents=True, exist_ok=True)
         self.companion_out.mkdir(parents=True, exist_ok=True)
@@ -128,8 +139,10 @@ class FileIpcBridge:
         self._last_registry_remove_mtime_ns: int | None = None
         self._last_action_result_mtime_ns: int | None = None
         self._last_event_mtime_ns: int | None = None
+        self._last_observe_result_mtime_ns: int | None = None
         self._action_results: dict[str, dict[str, Any]] = {}
         self._events: list[dict[str, Any]] = []
+        self._observe_results: dict[str, dict[str, Any]] = {}
 
     @property
     def paths(self) -> BridgePaths:
@@ -159,6 +172,7 @@ class FileIpcBridge:
         self._poll_registry_remove()
         self._poll_action_result()
         self._poll_event()
+        self._poll_observe_result()
 
     def request_action(
         self,
@@ -187,6 +201,34 @@ class FileIpcBridge:
 
     def recent_events(self) -> list[dict[str, Any]]:
         return list(self._events)
+
+    def request_observe(self, *, agent_id: str, request_id: str | None = None) -> str:
+        """Write an observe request and return its request id."""
+        request_id = request_id or f"obs-{uuid.uuid4().hex}"
+        _write_json(
+            self._paths.observe_request_path,
+            envelope(TYPE_OBSERVE_REQUEST, {"request_id": request_id, "agent_id": agent_id}),
+        )
+        return request_id
+
+    def get_observe_result(self, request_id: str) -> dict[str, Any] | None:
+        return self._observe_results.get(request_id)
+
+    def observe(self, agent_id: str, *, timeout_seconds: float = 1.0) -> dict[str, Any]:
+        """Request a snapshot from GMod and return the matching observe result."""
+        request_id = self.request_observe(agent_id=agent_id)
+        deadline = time.monotonic() + timeout_seconds
+        while time.monotonic() < deadline:
+            self.poll_once()
+            result = self.get_observe_result(request_id)
+            if result is not None:
+                return result
+            time.sleep(self._poll_interval)
+        return {
+            "request_id": request_id,
+            "agent_id": agent_id,
+            "error": "observe_timeout",
+        }
 
     def _poll_hello(self) -> None:
         try:
@@ -276,6 +318,22 @@ class FileIpcBridge:
         payload = message.get("payload")
         if isinstance(payload, dict):
             self._events.append(payload)
+
+    def _poll_observe_result(self) -> None:
+        message = self._read_changed(
+            self._paths.observe_result_path,
+            "_last_observe_result_mtime_ns",
+        )
+        if message is None:
+            return
+        if message.get("type") != TYPE_OBSERVE_RESULT or message.get("protocol_version") != PROTOCOL_VERSION:
+            return
+        payload = message.get("payload")
+        if not isinstance(payload, dict):
+            return
+        request_id = payload.get("request_id")
+        if isinstance(request_id, str):
+            self._observe_results[request_id] = payload
 
     def _read_changed(self, path: Path, attr_name: str) -> dict[str, Any] | None:
         try:

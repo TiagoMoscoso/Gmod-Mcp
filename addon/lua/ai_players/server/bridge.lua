@@ -15,6 +15,8 @@ Bridge.RegistryRemovePath = Bridge.GmodOut .. "/registry_remove.json"
 Bridge.ActionRequestPath = Bridge.CompanionOut .. "/action_request.json"
 Bridge.ActionResultPath = Bridge.GmodOut .. "/action_result.json"
 Bridge.EventPath = Bridge.GmodOut .. "/event.json"
+Bridge.ObserveRequestPath = Bridge.CompanionOut .. "/observe_request.json"
+Bridge.ObserveResultPath = Bridge.GmodOut .. "/observe_result.json"
 
 local function ensureDir(path)
     if not file.Exists(path, "DATA") then
@@ -116,6 +118,30 @@ function Bridge.EmitEvent(event)
     writeJson(Bridge.EventPath, AI_PLAYERS_BridgeEnvelope(
         AI_PLAYERS_BRIDGE_MESSAGE.EVENT,
         event
+    ))
+end
+
+function Bridge.ReadObserveRequest()
+    if not file.Exists(Bridge.ObserveRequestPath, "DATA") then
+        return nil
+    end
+
+    local message = readJson(Bridge.ObserveRequestPath)
+    if not message or message.type ~= AI_PLAYERS_BRIDGE_MESSAGE.OBSERVE_REQUEST then
+        return nil
+    end
+
+    if message.protocol_version ~= AI_PLAYERS_PROTOCOL_VERSION then
+        return nil
+    end
+
+    return message.payload
+end
+
+function Bridge.WriteObserveResult(result)
+    writeJson(Bridge.ObserveResultPath, AI_PLAYERS_BridgeEnvelope(
+        AI_PLAYERS_BRIDGE_MESSAGE.OBSERVE_RESULT,
+        result
     ))
 end
 

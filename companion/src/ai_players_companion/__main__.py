@@ -25,7 +25,7 @@ def main() -> None:
         bridge = FileIpcBridge(BridgePaths.from_gmod_data(Path(args.gmod_data)), registry=registry)
         bridge.start()
 
-    app = build_server(registry)
+    app = build_server(registry, bridge=bridge)
     print(
         f"ai-players-companion (protocol {PROTOCOL_VERSION}): "
         f"serving MCP at http://{app.settings.host}:{app.settings.port}{app.settings.streamable_http_path}"
