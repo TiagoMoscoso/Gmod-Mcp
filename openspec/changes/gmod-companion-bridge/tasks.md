@@ -1,6 +1,6 @@
 ## 1. Transport spike
 
-- [ ] 1.1 Time-box SPK-TRN-001 on a Sandbox listen server: file IPC under `garrysmod/data/` vs `HTTP()` to `127.0.0.1` and verify one path can send a hello and receive hello_ok
+- [x] 1.1 Time-box SPK-TRN-001 on a Sandbox listen server: file IPC under `garrysmod/data/` vs `HTTP()` to `127.0.0.1` and verify one path can send a hello and receive hello_ok
 - [ ] 1.2 Write the chosen transport and failure modes into `docs/architecture/companion.md` and verify the doc states the winner and what was rejected
 - [ ] 1.3 Implement that transport on both Companion and GLua and verify a hello round-trip works with the real addon plus Companion process
 
