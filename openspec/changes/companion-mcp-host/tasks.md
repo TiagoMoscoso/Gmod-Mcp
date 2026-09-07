@@ -13,7 +13,7 @@
 
 ## 3. Safety and session
 
-- [ ] 3.1 Keep a denylist of `execute_lua`, `shell`, `eval`, `run_console_command`, and frame-input names and verify a catalog test asserts none are registered
+- [x] 3.1 Keep a denylist of `execute_lua`, `shell`, `eval`, `run_console_command`, and frame-input names and verify a catalog test asserts none are registered
 - [ ] 3.2 Track MCP client connected/disconnected and verify unit tests flip the flag on session start and end
 - [ ] 3.3 Expose `PROTOCOL_VERSION` from the Companion process (health or handshake field) and verify it matches the scaffold constant `"1"`
 

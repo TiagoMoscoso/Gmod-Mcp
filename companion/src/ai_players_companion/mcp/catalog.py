@@ -13,9 +13,33 @@ from collections.abc import Iterable
 
 from mcp.server.fastmcp import FastMCP
 
+# AGENTS.md "Forbidden": never add these, even as a "debug" tool, without a
+# new ADR. Code-execution escape hatches and frame-level input both violate
+# ADR-002 (cognition != motor control) and ADR-003 (no vendor/engine escape
+# hatches in the provider-agnostic MCP surface).
+FORBIDDEN_TOOL_NAMES = frozenset(
+    {
+        "execute_lua",
+        "shell",
+        "eval",
+        "run_console_command",
+        "lua_run",
+        "press_w",
+        "move_mouse",
+        "press_attack",
+    }
+)
+
 
 class CatalogSafetyError(RuntimeError):
     """Raised when the MCP tool catalog contains a forbidden or per-character tool."""
+
+
+def assert_no_forbidden_tools(tool_names: Iterable[str]) -> None:
+    """Fail closed if `tool_names` contains a denylisted code-execution or frame-input tool."""
+    forbidden_hits = sorted(FORBIDDEN_TOOL_NAMES.intersection(tool_names))
+    if forbidden_hits:
+        raise CatalogSafetyError(f"forbidden tool(s) registered: {forbidden_hits}")
 
 
 def assert_no_character_scoped_tools(tool_names: Iterable[str], agent_names: Iterable[str]) -> None:
