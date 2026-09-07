@@ -12,6 +12,7 @@ from __future__ import annotations
 from mcp.server.fastmcp import FastMCP
 
 from ai_players_companion.agents.registry import AgentRegistry
+from ai_players_companion.mcp.catalog import assert_no_character_scoped_tools, registered_tool_names
 from ai_players_companion.mcp.tools import register_management_tools
 
 # Matches the proposed URL in ADR-005 and the in-game popup. Never pass
@@ -40,5 +41,10 @@ def build_server(
         port=port,
         streamable_http_path=streamable_http_path,
     )
-    register_management_tools(app, registry if registry is not None else AgentRegistry())
+    registry = registry if registry is not None else AgentRegistry()
+    register_management_tools(app, registry)
+    assert_no_character_scoped_tools(
+        tool_names=registered_tool_names(app),
+        agent_names=[record.name for record in registry.list_agents()],
+    )
     return app
