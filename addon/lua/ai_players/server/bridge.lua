@@ -40,14 +40,13 @@ function Bridge.Start()
 
     AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
 
-    writeJson(Bridge.HelloPath, {
-        type = AI_PLAYERS_BRIDGE_MESSAGE.HELLO,
-        protocol_version = AI_PLAYERS_PROTOCOL_VERSION,
-        payload = {
+    writeJson(Bridge.HelloPath, AI_PLAYERS_BridgeEnvelope(
+        AI_PLAYERS_BRIDGE_MESSAGE.HELLO,
+        {
             source = "gmod",
             bridge = "file_ipc",
-        },
-    })
+        }
+    ))
 
     timer.Create("AIPlayersBridgeHelloPoll", 0.5, 20, function()
         local okMessage = file.Exists(Bridge.HelloOkPath, "DATA") and readJson(Bridge.HelloOkPath) or nil

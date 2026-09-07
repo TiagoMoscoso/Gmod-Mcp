@@ -16,9 +16,11 @@ from typing import Any
 
 from ai_players_companion.protocol import (
     PROTOCOL_VERSION,
+    TYPE_BRIDGE_STATUS,
     TYPE_HELLO,
     TYPE_HELLO_OK,
     TYPE_HELLO_REJECT,
+    envelope,
 )
 
 BRIDGE_DIRNAME = "ai_players/bridge"
@@ -127,39 +129,33 @@ class FileIpcBridge:
         if hello.get("protocol_version") != PROTOCOL_VERSION:
             self._reject("protocol_mismatch")
             return
-        payload = {
-            "type": TYPE_HELLO_OK,
-            "protocol_version": PROTOCOL_VERSION,
-            "payload": {
+        payload = envelope(
+            TYPE_HELLO_OK,
+            {
                 "source": "companion",
                 "bridge": "file_ipc",
                 "mcp_url": "http://127.0.0.1:8765/mcp",
             },
-        }
+        )
         _write_json(self._paths.hello_ok_path, payload)
         self._write_status(ready=True, state="healthy")
 
     def _reject(self, reason: str) -> None:
         _write_json(
             self._paths.hello_reject_path,
-            {
-                "type": TYPE_HELLO_REJECT,
-                "protocol_version": PROTOCOL_VERSION,
-                "payload": {"reason": reason},
-            },
+            envelope(TYPE_HELLO_REJECT, {"reason": reason}),
         )
         self._write_status(ready=False, state=reason)
 
     def _write_status(self, *, ready: bool, state: str) -> None:
         _write_json(
             self._paths.status_path,
-            {
-                "type": "bridge_status",
-                "protocol_version": PROTOCOL_VERSION,
-                "payload": {
+            envelope(
+                TYPE_BRIDGE_STATUS,
+                {
                     "ready": ready,
                     "state": state,
                     "updated_at": time.time(),
                 },
-            },
+            ),
         )
