@@ -1,7 +1,7 @@
 ## 1. Embodiment spike
 
 - [x] 1.1 Time-box SPK-BOT-001: `player.CreateNextBot` on a listen server (follow-ready body + slot/Kick behavior) versus a NextBot SENT from Spawn Menu and verify notes record which embodiment M1 uses
-- [ ] 1.2 Update `docs/architecture/gmod-runtime.md` (or the open question) with the spike output and verify the chosen spawn/remove APIs are written down (`Kick` vs `Remove`)
+- [x] 1.2 Update `docs/architecture/gmod-runtime.md` (or the open question) with the spike output and verify the chosen spawn/remove APIs are written down (`Kick` vs `Remove`)
 
 ## 2. Spawn and lifecycle
 

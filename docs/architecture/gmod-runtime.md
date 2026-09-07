@@ -1,6 +1,6 @@
 # GMod runtime
 
-**Status:** GLua owns gameplay. Embodiment and StartCommand details are **Open** / **Hypothesis** until spikes land.
+**Status:** GLua owns gameplay. Embodiment for M1 is **Accepted**: player bot via `player.CreateNextBot`, confirmed by `SPK-BOT-001` in the `ai-player-spawn-and-bind` change (see [OQ-BOT-001](../requirements/open-questions.md#oq-bot-001-embodiment)). Other StartCommand details remain **Hypothesis** until later spikes land.
 
 ## Role
 
@@ -31,25 +31,42 @@ Controllers persist across many ticks until they finish, fail, or are preempted.
 
 Speech (`say`) is a short relay, not a locomotion controller. **Hypothesis:** `say` can run in parallel with follow.
 
-## StartCommand / CUserCmd
+## Embodiment (Accepted for M1)
 
-If embodiment is a **player bot**:
+**Accepted:** the AI Player entity for M1 is a **player bot** created with `player.CreateNextBot`.
+
+`SPK-BOT-001` ran on the live `gm_construct` listen server (16 slots) and confirmed:
+
+- Spawn succeeds and returns a real `Player` (`IsPlayer() == true`, `IsBot() == true`).
+- It consumes one player slot per AI Player (14 of 16 remained free after the first spawn; a second and third bot spawned without issue).
+- It gets the real player weapon/inventory system: `Give("weapon_pistol")` leaves it holding a genuine active weapon, so `equip_weapon` / `attack` (`combat-actions` change) can reuse player weapon APIs instead of hand-rolled combat.
+- Aim is controllable (`SetEyeAngles`), and it is driven every tick through `GM:StartCommand` / `CUserCmd` like any other player bot.
+- Removal is asynchronous and must use `Player:Kick`, never `Entity:Remove`: the entity is still valid the same tick `Kick` is called, and gone about a second later.
+
+### Rejected as M1 primary: native NextBot SENT
+
+`SPK-BOT-001` also spawned a runtime-registered `ENT.Base = "base_nextbot"` SENT on the same server. It spawns without a player-slot cost, but:
+
+- It has no native weapon/inventory API (`Entity:Give` is not available on a non-player entity) — combat would need a fully hand-rolled attack behavior instead of reusing player weapons.
+- Its `self:MoveToPos()` call returned `"failed"` in the spike run. The spike positioned the player bot on a nav-validated `info_player_start` but spawned the NextBot at the raw entity-creation origin, so this result does not prove NextBot pathing is broken on this map — it is an open, unresolved data point, not a settled rejection reason on its own.
+
+Given the vertical slice needs `equip_weapon` / `attack` without new MCP aim tools, and player slots were abundant in the spike, player bot is the stronger M1 choice. NextBot SENT is not used as the driven AI Player embodiment for M1, but the engine still uses a SENT for one purpose: see "Spawn Menu placement" below.
+
+### Spawn Menu placement
+
+Garry's Mod's Spawn Menu places registered `SENT`/`SWEP`/`NPC` classes at a world position; it does not have a mechanism to place a `player.CreateNextBot` bot at a clicked location. `NPCs > AI Players > AI NPC` therefore places a lightweight **INACTIVE placeholder SENT**, not the final player bot. A Tool Gun bind (`ai-player-spawn-and-bind` change) promotes that placeholder: it removes the SENT (`Entity:Remove`, no player slot was ever consumed) and calls `player.CreateNextBot` at the placeholder's position to create the real, registered AI Player. Removal rules therefore differ by lifecycle stage of the same conceptual AI Player: `Entity:Remove` for an unbound placeholder, `Player:Kick` for a bound/promoted player bot.
+
+### StartCommand / CUserCmd
 
 - Create with `player.CreateNextBot`
 - Drive with `GM:StartCommand`
 - Move with `CUserCmd:SetForwardMove` / side move / buttons / view angles
 - Path with `PathFollower` (player nextbots still need forward move)
 - Remove with `Player:Kick`, never `Entity:Remove`
-- **Cannot spawn in singleplayer**
+- **Cannot spawn in singleplayer**; requires a listen or dedicated server with a free player slot
 - Consume player slots; bots are UnAuthed
 
-If embodiment is a **NextBot SENT**:
-
-- Spawn Menu NPC is natural
-- Locomotion via NextBot loco
-- Player weapons and sandbox gunplay are weaker / different
-
-Do not pretend these are the same entity type. See [OQ-BOT-001](../requirements/open-questions.md#oq-bot-001-embodiment) and [SPK-BOT-001](../planning/technical-spikes.md).
+Do not pretend a promoted player bot and its unbound placeholder SENT are the same entity type across their lifecycle. See [OQ-BOT-001](../requirements/open-questions.md#oq-bot-001-embodiment) and [SPK-BOT-001](../planning/technical-spikes.md).
 
 ## Perception
 
@@ -91,4 +108,4 @@ The native voice module is **Proposed** server-side for capture.
 
 ## Singleplayer warning
 
-True `game.SinglePlayer()` is hostile to player bots. The UX of "I launched Sandbox and spawned Walter" may require a listen server with extra slots. This must be documented to users once embodiment is chosen — not papered over.
+True `game.SinglePlayer()` is hostile to player bots. Embodiment is now chosen (player bot, above), so "I launched Sandbox and spawned Walter" requires a listen server or dedicated server with a free player slot; true singleplayer cannot bind an AI Player. This is documented for operators in [addon/README.md](../../addon/README.md).
