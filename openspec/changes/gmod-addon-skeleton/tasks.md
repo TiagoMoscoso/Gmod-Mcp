@@ -11,4 +11,4 @@
 ## 3. Honest client state
 
 - [x] 3.1 Add a client-side Companion status value defaulting to disconnected and verify loading the addon never draws an MCP-online popup or copyable live URL
-- [ ] 3.2 Document in a short `addon/README.md` that MCP is hosted by the Companion and this skeleton does not spawn NPCs and verify the README points at GitHub docs, not a fake local endpoint success path
+- [x] 3.2 Document in a short `addon/README.md` that MCP is hosted by the Companion and this skeleton does not spawn NPCs and verify the README points at GitHub docs, not a fake local endpoint success path
