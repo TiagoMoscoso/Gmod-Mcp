@@ -1,6 +1,6 @@
 ## 1. Repository split
 
-- [ ] 1.1 Create top-level `addon/`, `companion/`, and `tests/` directories and verify they sit beside existing `docs/` with no Companion or docs files under `addon/`
+- [x] 1.1 Create top-level `addon/`, `companion/`, and `tests/` directories and verify they sit beside existing `docs/` with no Companion or docs files under `addon/`
 - [ ] 1.2 Add `.gitignore` for Python venv/__pycache__, `.pyc`, OS junk, and GMod temp files and verify `git status` does not offer those patterns as new tracked files
 
 ## 2. GLua addon skeleton
