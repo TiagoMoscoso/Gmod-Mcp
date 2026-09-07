@@ -6,4 +6,5 @@ AI_PLAYERS = AI_PLAYERS or {}
 AI_PLAYERS.Adapter = include("ai_players/integrations/sandbox_adapter.lua")
 AI_PLAYERS.Registry = include("ai_players/server/registry.lua")
 AI_PLAYERS.Bridge = include("ai_players/server/bridge.lua")
+include("ai_players/server/spawn.lua")
 AI_PLAYERS.Bridge.Start()
