@@ -21,4 +21,4 @@
 
 - [x] 4.1 Add `tests/README.md` stating Companion unit tests land in `companion-mcp-host` and verify the file does not claim a test harness exists yet
 - [x] 4.2 Update the root README "Proposed monorepo" section to "Created skeleton" with the same split and verify it still says MCP/gameplay are not implemented
-- [ ] 4.3 Confirm no LICENSE file was added and verify OQ-DIST-001 remains the license tracker
+- [x] 4.3 Confirm no LICENSE file was added and verify OQ-DIST-001 remains the license tracker
