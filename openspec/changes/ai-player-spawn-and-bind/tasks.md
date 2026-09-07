@@ -5,7 +5,7 @@
 
 ## 2. Spawn and lifecycle
 
-- [ ] 2.1 Register Spawn Menu category `NPCs > AI Players > AI NPC` and verify placing it on `gm_construct` creates an INACTIVE entity
+- [x] 2.1 Register Spawn Menu category `NPCs > AI Players > AI NPC` and verify placing it on `gm_construct` creates an INACTIVE entity
 - [x] 2.2 Implement the registry (`agent_id`, name, context, capabilities, state, entity handle) and verify an unbound spawn is not listed on `list_agents`
 - [x] 2.3 Implement state transitions INACTIVE → WAITING_FOR_AGENT → ACTIVE and ACTIVE → DISCONNECTED on bridge loss and verify `get_agent_status` reflects the state
 - [x] 2.4 Halt locomotion/attack inputs in INACTIVE, WAITING_FOR_AGENT, PAUSED, ERROR, and DISCONNECTED and verify a disconnected NPC does not keep shooting or roaming

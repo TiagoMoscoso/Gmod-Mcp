@@ -339,6 +339,13 @@ if realm == "client" then
         io.stderr:write("popup must never expose 0.0.0.0 as a client MCP URL\n")
         os.exit(1)
     end
+
+    -- spec: addon/spawn-lifecycle "Inactive spawn from Spawn Menu" (2.1).
+    local npcEntry = list.Get("NPC")["ai_players_npc"]
+    if not npcEntry or npcEntry.Class ~= "ai_players_npc" or npcEntry.Category ~= "AI Players" then
+        io.stderr:write("Spawn Menu must list ai_players_npc under the AI Players category\n")
+        os.exit(1)
+    end
 end
 
 print("ok: " .. realm .. " boot")

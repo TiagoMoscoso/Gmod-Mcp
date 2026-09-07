@@ -157,6 +157,20 @@ function M.install(luaRoot, realm)
     function gui.OpenURL(value)
         M.openedUrl = value
     end
+
+    -- Real enough to boot-test Spawn Menu registration (ai-player-spawn-
+    -- and-bind task 2.1) without a Spawn Menu UI.
+    list = {}
+    local lists = {}
+
+    function list.Set(listName, key, value)
+        lists[listName] = lists[listName] or {}
+        lists[listName][key] = value
+    end
+
+    function list.Get(listName)
+        return lists[listName] or {}
+    end
 end
 
 return M
