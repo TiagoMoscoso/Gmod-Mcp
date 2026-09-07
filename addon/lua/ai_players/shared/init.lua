@@ -12,3 +12,4 @@ AI_PLAYERS = AI_PLAYERS or {}
 include("ai_players/shared/protocol.lua")
 include("ai_players/shared/adapter.lua")
 include("ai_players/shared/convars.lua")
+include("ai_players/shared/companion_status.lua")
