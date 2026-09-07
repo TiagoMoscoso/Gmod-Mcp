@@ -18,6 +18,9 @@ from ai_players_companion.agents.registry import AgentRecord, AgentRegistry
 from ai_players_companion.protocol import (
     PROTOCOL_VERSION,
     TYPE_BRIDGE_STATUS,
+    TYPE_ACTION_REQUEST,
+    TYPE_ACTION_RESULT,
+    TYPE_EVENT,
     TYPE_HELLO,
     TYPE_HELLO_OK,
     TYPE_HELLO_REJECT,
@@ -71,6 +74,18 @@ class BridgePaths:
     def registry_remove_path(self) -> Path:
         return self.gmod_out / "registry_remove.json"
 
+    @property
+    def action_request_path(self) -> Path:
+        return self.companion_out / "action_request.json"
+
+    @property
+    def action_result_path(self) -> Path:
+        return self.gmod_out / "action_result.json"
+
+    @property
+    def event_path(self) -> Path:
+        return self.gmod_out / "event.json"
+
     def ensure(self) -> None:
         self.gmod_out.mkdir(parents=True, exist_ok=True)
         self.companion_out.mkdir(parents=True, exist_ok=True)
@@ -111,6 +126,10 @@ class FileIpcBridge:
         self._last_hello_mtime_ns: int | None = None
         self._last_registry_upsert_mtime_ns: int | None = None
         self._last_registry_remove_mtime_ns: int | None = None
+        self._last_action_result_mtime_ns: int | None = None
+        self._last_event_mtime_ns: int | None = None
+        self._action_results: dict[str, dict[str, Any]] = {}
+        self._events: list[dict[str, Any]] = []
 
     @property
     def paths(self) -> BridgePaths:
@@ -138,6 +157,36 @@ class FileIpcBridge:
         self._poll_hello()
         self._poll_registry_upsert()
         self._poll_registry_remove()
+        self._poll_action_result()
+        self._poll_event()
+
+    def request_action(
+        self,
+        *,
+        action_id: str,
+        agent_id: str,
+        action: str,
+        params: dict[str, Any],
+    ) -> None:
+        """Write an action request for GMod to execute asynchronously."""
+        _write_json(
+            self._paths.action_request_path,
+            envelope(
+                TYPE_ACTION_REQUEST,
+                {
+                    "action_id": action_id,
+                    "agent_id": agent_id,
+                    "action": action,
+                    "params": params,
+                },
+            ),
+        )
+
+    def get_action_result(self, action_id: str) -> dict[str, Any] | None:
+        return self._action_results.get(action_id)
+
+    def recent_events(self) -> list[dict[str, Any]]:
+        return list(self._events)
 
     def _poll_hello(self) -> None:
         try:
@@ -201,6 +250,32 @@ class FileIpcBridge:
         agent_id = message.get("payload", {}).get("agent_id")
         if isinstance(agent_id, str):
             self._registry.remove(agent_id)
+
+    def _poll_action_result(self) -> None:
+        message = self._read_changed(
+            self._paths.action_result_path,
+            "_last_action_result_mtime_ns",
+        )
+        if message is None:
+            return
+        if message.get("type") != TYPE_ACTION_RESULT or message.get("protocol_version") != PROTOCOL_VERSION:
+            return
+        payload = message.get("payload")
+        if not isinstance(payload, dict):
+            return
+        action_id = payload.get("action_id")
+        if isinstance(action_id, str):
+            self._action_results[action_id] = payload
+
+    def _poll_event(self) -> None:
+        message = self._read_changed(self._paths.event_path, "_last_event_mtime_ns")
+        if message is None:
+            return
+        if message.get("type") != TYPE_EVENT or message.get("protocol_version") != PROTOCOL_VERSION:
+            return
+        payload = message.get("payload")
+        if isinstance(payload, dict):
+            self._events.append(payload)
 
     def _read_changed(self, path: Path, attr_name: str) -> dict[str, Any] | None:
         try:

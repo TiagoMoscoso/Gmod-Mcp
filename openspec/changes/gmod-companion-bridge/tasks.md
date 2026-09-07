@@ -9,7 +9,7 @@
 - [x] 2.1 Define JSON envelopes (`type`, `protocol_version`, payload) for handshake, registry, action, event, and observe and verify a schema/example file or module lists every type used in MVP
 - [x] 2.2 Implement handshake using the shared protocol version constant and verify matching versions become healthy and mismatched versions fail closed
 - [x] 2.3 Implement registry upsert/remove messages and verify a fixture upsert is visible to Companion `list_agents` (replacing or sitting behind the mock registry)
-- [ ] 2.4 Implement action_request / action_result and event messages and verify a contract test with a fake GMod peer round-trips both without a full game
+- [x] 2.4 Implement action_request / action_result and event messages and verify a contract test with a fake GMod peer round-trips both without a full game
 - [ ] 2.5 Implement observe_request / observe_result with a fixture snapshot and verify the Companion can return that payload to a caller
 
 ## 3. Health and popup

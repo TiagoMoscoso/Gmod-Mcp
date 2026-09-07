@@ -12,6 +12,9 @@ Bridge.HelloOkPath = Bridge.CompanionOut .. "/hello_ok.json"
 Bridge.HelloRejectPath = Bridge.CompanionOut .. "/hello_reject.json"
 Bridge.RegistryUpsertPath = Bridge.GmodOut .. "/registry_upsert.json"
 Bridge.RegistryRemovePath = Bridge.GmodOut .. "/registry_remove.json"
+Bridge.ActionRequestPath = Bridge.CompanionOut .. "/action_request.json"
+Bridge.ActionResultPath = Bridge.GmodOut .. "/action_result.json"
+Bridge.EventPath = Bridge.GmodOut .. "/event.json"
 
 local function ensureDir(path)
     if not file.Exists(path, "DATA") then
@@ -82,6 +85,37 @@ function Bridge.RemoveAgent(agentId)
         {
             agent_id = agentId,
         }
+    ))
+end
+
+function Bridge.ReadActionRequest()
+    if not file.Exists(Bridge.ActionRequestPath, "DATA") then
+        return nil
+    end
+
+    local message = readJson(Bridge.ActionRequestPath)
+    if not message or message.type ~= AI_PLAYERS_BRIDGE_MESSAGE.ACTION_REQUEST then
+        return nil
+    end
+
+    if message.protocol_version ~= AI_PLAYERS_PROTOCOL_VERSION then
+        return nil
+    end
+
+    return message.payload
+end
+
+function Bridge.WriteActionResult(result)
+    writeJson(Bridge.ActionResultPath, AI_PLAYERS_BridgeEnvelope(
+        AI_PLAYERS_BRIDGE_MESSAGE.ACTION_RESULT,
+        result
+    ))
+end
+
+function Bridge.EmitEvent(event)
+    writeJson(Bridge.EventPath, AI_PLAYERS_BridgeEnvelope(
+        AI_PLAYERS_BRIDGE_MESSAGE.EVENT,
+        event
     ))
 end
 
