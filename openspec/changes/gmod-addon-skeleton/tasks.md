@@ -6,7 +6,7 @@
 ## 2. Gamemode adapter stub
 
 - [x] 2.1 Define a `GameAdapter` table interface (`CanCombat`, `FormatChat`, `Use` or equivalent no-ops) in shared/server code and verify Sandbox init selects `SandboxAdapter`
-- [ ] 2.2 Implement `SandboxAdapter` with Sandbox-safe defaults and verify a repo search of `addon/lua/ai_players` finds no DarkRP/Helix requires
+- [x] 2.2 Implement `SandboxAdapter` with Sandbox-safe defaults and verify a repo search of `addon/lua/ai_players` finds no DarkRP/Helix requires
 
 ## 3. Honest client state
 
