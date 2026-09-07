@@ -1,15 +1,16 @@
-"""Companion process entry point.
+"""Companion process entry point: serves the MCP host over Streamable HTTP."""
 
-This skeleton does not host MCP, bind a port, or serve /mcp. It only
-confirms the package installs and runs; the MCP host lands in the
-companion-mcp-host change.
-"""
-
+from .mcp.server import build_server
 from .protocol import PROTOCOL_VERSION
 
 
 def main() -> None:
-    print(f"ai-players-companion (protocol {PROTOCOL_VERSION}): MCP is not hosted yet.")
+    app = build_server()
+    print(
+        f"ai-players-companion (protocol {PROTOCOL_VERSION}): "
+        f"serving MCP at http://{app.settings.host}:{app.settings.port}{app.settings.streamable_http_path}"
+    )
+    app.run(transport="streamable-http")
 
 
 if __name__ == "__main__":
