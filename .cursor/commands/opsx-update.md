@@ -32,6 +32,8 @@ Revise a change's existing planning artifacts and keep them coherent. Never edit
 
    Always announce: "Using change: <name>" and how to override (e.g., `/opsx-update <other>`).
 
+   **Git (required):** Follow `AGENTS.md` "Git for OpenSpec changes". Check out or create `change/<name>` from `main`. Never update a change on `main`. After this planning pass, one Conventional Commit on that branch.
+
 2. **Get the change's artifacts**
    ```bash
    openspec status --change "<name>" --json
@@ -76,6 +78,7 @@ After each invocation, show:
 - Which artifacts were revised (and which proposed revisions were rejected)
 - Anything deferred to `/opsx-continue` (not-yet-created artifacts or files)
 - Where the change stands and the recommended next command
+- Confirm the work is on `change/<name>` and that this planning pass was committed
 
 **Guardrails**
 - Planning artifacts only - NEVER edit implementation code. If the revised plan implies code changes, stop and point to `/opsx-apply`.

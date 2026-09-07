@@ -24,6 +24,8 @@ From [mvp.md](mvp.md), on `gm_construct` (listen server if embodiment requires i
 
 OpenSpec changes live under `openspec/changes/`. Apply with `/opsx-apply` (one change at a time). Each change already has `proposal.md`, `specs/`, `design.md`, and `tasks.md`.
 
+Git: one change → branch `change/<name>`; one `tasks.md` item → one commit; when that change’s tasks are done → pull request to `main` (see `AGENTS.md`).
+
 | # | Change | Specs | Closes |
 | --- | --- | --- | --- |
 | 1 | [`scaffold-monorepo`](../../openspec/changes/scaffold-monorepo/) | `repo/monorepo-layout` | Empty `addon/` + `companion/` + `tests/` split |
@@ -208,6 +210,6 @@ Those belong to [milestones.md](milestones.md) M2+ and [v2-backlog.md](v2-backlo
 ## How to use this file
 
 1. Read [mvp.md](mvp.md) once.
-2. Apply change 1.
+2. Apply change 1 on branch `change/<name>` (one commit per `tasks.md` item). When that change’s tasks are done, open a PR to `main`.
 3. After each change, run that change's Scenario/spike verification before opening the next `/opsx-apply`.
 4. When 7 is green, Scenario A is the product hypothesis test. When 8 is green, the MVP slice is complete.

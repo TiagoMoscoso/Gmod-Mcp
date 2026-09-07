@@ -147,6 +147,11 @@ context: |
   - Use `<layer>/<capability>`: repo/…, addon/…, companion/…, protocol/….
   - Match existing names when modifying (e.g. companion/mcp-server).
 
+  Git for OpenSpec changes
+  - One change = one branch `change/<name>`. Never propose, apply, or archive on main.
+  - Apply: one Conventional Commit per tasks.md checkbox (include the checkbox).
+  - All apply tasks done = push and open a pull request to main. Do not merge unless asked.
+
 # -----------------------------------------------------------------------------
 # Per-artifact rules
 # Keys are spec-driven artifact ids: proposal, specs, design, tasks.
@@ -184,7 +189,8 @@ rules:
     - "Group by layer (addon, companion, tests, docs). Include tests and English documentation updates in the same change that ships behavior."
     - "Every MCP or controller task includes a rejection or fail-closed case, not only the happy path."
     - "Do not add providers/, TTS, playermodel picker, LICENSE, or native/ unless the change is explicitly that work."
-    - "End with a validation step (tests or a documented manual GMod check). Do not require a commit per task unless the user asked for commits."
+    - "End with a validation step (tests or a documented manual GMod check)."
+    - "Apply lands on git branch change/<name> (never main). One Conventional Commit per tasks.md checkbox. When all tasks are done, push and open a pull request to main; do not merge unless asked."
 
 # -----------------------------------------------------------------------------
 # Operation guidance (apply and archive only)
@@ -201,6 +207,8 @@ operations:
       - "Add or update tests with the behavior, not after a pile of unmarked tasks. Companion tests must run without Garry's Mod."
       - "If a task is blocked on an Open question, stop and record the OQ id; do not invent a lock."
       - "Mark a task complete only after its tests or documented check pass."
+      - "Git: work only on change/<name>. After each completed tasks.md item, one Conventional Commit (include the checkbox). Never batch tasks. Never apply on main."
+      - "When all tasks are done: push the branch and open a pull request to main. Return the PR URL. Do not merge unless the user asks. Then suggest archive on the same branch."
 
   archive:
     guidance:
@@ -209,3 +217,4 @@ operations:
       - "If docs/ drifted (MVP tools, component layout, protocol version), update the relevant docs in English in the same archive pass or list them as follow-up."
       - "Do not treat archive as a chance to decide Open questions or start v2 work."
       - "Confirm forbidden tools are still absent from the MCP surface before finishing."
+      - "Stay on change/<name>. Commit the archive as one Conventional Commit and push so the existing PR to main updates. Open that PR if apply did not."

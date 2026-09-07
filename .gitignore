@@ -1,0 +1,20 @@
+# Python (companion/)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+
+# GMod / Workshop temp
+*.gma
+*.gma.temp
+workshop.vdf
+
+# OS junk
+.DS_Store
+Thumbs.db

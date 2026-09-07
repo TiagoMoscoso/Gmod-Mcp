@@ -22,6 +22,8 @@ Implement tasks from an OpenSpec change.
 
    Always announce: "Using change: <name>" and how to override (e.g., `/opsx-apply <other>`).
 
+   **Git (required):** Follow `AGENTS.md` "Git for OpenSpec changes". Check out or create branch `change/<name>` from `main`. Never apply on `main`. Reuse the existing branch for this change. Stop if unrelated files are dirty.
+
 2. **Check status to understand the schema**
    ```bash
    openspec status --change "<name>" --json
@@ -47,7 +49,7 @@ Implement tasks from an OpenSpec change.
 
    **Handle states:**
    - If `state: "blocked"` (missing artifacts): show message, suggest using `/opsx-continue` (if it is not installed, run `openspec status --change "<name>" --json` to see the next artifact and `openspec instructions <artifact-id> --change "<name>" --json` for how to create it)
-   - If `state: "all_done"`: congratulate, suggest archive
+   - If `state: "all_done"`: congratulate, ensure the branch is pushed and a PR to `main` exists, then suggest archive
    - Otherwise: proceed to implementation
 
    Treat `context` as a required prompt-level input. Read and consider it, and
@@ -90,6 +92,7 @@ Implement tasks from an OpenSpec change.
    - Make the code changes required
    - Keep changes minimal and focused
    - Mark task complete in the tasks file: `- [ ]` → `- [x]`
+   - Create **one** Conventional Commit for this task only (implementation + checkbox). Include the task id (for example `1.2`). Do not batch tasks.
    - Continue to next task
 
    **Pause if:**
@@ -104,7 +107,7 @@ Implement tasks from an OpenSpec change.
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
+   - If all done: push `change/<name>`, open a PR to `main` with `gh pr create` if none exists, return the URL, then suggest archive on the same branch
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -129,13 +132,15 @@ Working on task 4/7: <task description>
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Progress:** 7/7 tasks complete ✓
+**Branch:** change/<change-name>
+**PR:** <url>
 
 ### Completed This Session
 - [x] Task 1
 - [x] Task 2
 ...
 
-All tasks complete! You can archive this change with `/opsx-archive`.
+All tasks complete! You can archive this change with `/opsx-archive` (same branch; another commit on the PR). Do not merge unless asked.
 ```
 
 **Output On Pause (Issue Encountered)**
@@ -165,6 +170,7 @@ What would you like to do?
 - If implementation reveals issues, pause and suggest artifact updates
 - Keep code changes minimal and scoped to each task
 - Update task checkbox immediately after completing each task
+- After each completed task, one Conventional Commit on `change/<name>`; when all tasks are done, push and open a PR to `main`; do not merge unless asked
 - Pause on errors, blockers, or unclear requirements - don't guess
 - When a task needs work beyond what the spec describes, surface the added scope and pause - never silently narrow, defer, or simplify away specified behavior
 - Only mark a task `- [x]` when its specified behavior is fully implemented, not when it is partially done or deferred

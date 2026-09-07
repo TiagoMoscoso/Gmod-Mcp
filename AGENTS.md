@@ -59,6 +59,45 @@ CLI (repo root): `openspec status --change "<name>" --json`, `openspec instructi
 
 Capability IDs: `<layer>/<capability>` (`repo/…`, `addon/…`, `companion/…`, `protocol/…`). Reuse existing names when modifying.
 
+## Git for OpenSpec changes
+
+Standing authorization while working on a named OpenSpec change (do not wait for a second “please commit”):
+
+| Unit | Git |
+| --- | --- |
+| One OpenSpec change | One branch `change/<name>` — never `main` |
+| One `tasks.md` checkbox | One Conventional Commit |
+| All apply tasks done | Push and open a pull request to `main` |
+
+### Branch
+
+Before propose, update, apply, or archive on change `<name>`:
+
+1. If HEAD is not `change/<name>`, create it from up-to-date `main` or check out the existing local/remote branch.
+2. Reuse `change/<name>` if it already exists. Do not invent a second branch for the same change.
+3. Stop if the working tree has **unrelated** dirty files. Uncommitted work that belongs to this change may come along onto the new branch.
+4. Never implement, propose, or archive a change on `main`.
+
+### Commits (apply)
+
+After each task: implement, verify, mark `- [x]`, then commit **only** that task (implementation + checkbox). English Conventional Commits (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`). Subject states why; include the task id (for example `1.2`).
+
+Do not batch multiple tasks into one commit. Do not `--no-verify`, `--amend` unless the commit rules allow it, or force-push.
+
+Propose/update: stay on `change/<name>` and make **one** Conventional Commit when the planning artifacts for that invocation are complete. Do not open a PR until apply is finished unless the user only asked for planning review.
+
+Archive: stay on `change/<name>`. One Conventional Commit after specs merge; push so the PR updates.
+
+### Pull request
+
+When apply reaches all tasks complete:
+
+1. `git push -u origin HEAD` if the branch is not on origin.
+2. Open a PR targeting `main` with `gh pr create` if none exists for this branch. Return the URL.
+3. Suggest archive on the same branch (another commit on the PR). Do not merge unless the user asks.
+
+Typo/comment fixes that skip OpenSpec still need an explicit commit request. Do not commit secrets.
+
 ## Architecture (do not violate)
 
 Locked enough to implement (see ADRs in `docs/architecture/decisions/`):
@@ -102,7 +141,7 @@ Engine facts: vanilla GLua cannot host MCP HTTP; GMod may block private-IP HTTP 
 - Comments explain **why**, invariants, and engine constraints — not the next line. Public modules and MCP tools get brief docs (purpose, params, errors, phase).
 - Tests prove spec behavior. Companion tests must run **without** Garry's Mod.
 - Fail closed on protocol mismatch, missing Companion, or denied capability.
-- Conventional Commits in English: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`. Do not commit unless the user asks.
+- Conventional Commits in English: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`. OpenSpec apply is standing authorization for one commit per task and a PR to `main` (see **Git for OpenSpec changes**). Other work still waits for an explicit commit request.
 
 ## Commands (when the trees exist)
 

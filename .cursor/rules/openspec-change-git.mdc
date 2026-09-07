@@ -1,0 +1,22 @@
+---
+description: OpenSpec git mapping — change is a branch, task is a commit, done means PR to main
+alwaysApply: true
+---
+
+# OpenSpec git (standing authorization)
+
+While working on a named OpenSpec change, do not wait for a second “please commit”.
+
+| Unit | Git |
+| --- | --- |
+| Change `<name>` | Branch `change/<name>` — never `main` |
+| One `tasks.md` checkbox | One Conventional Commit (include the `- [x]`) |
+| All apply tasks done | `git push` and `gh pr create` targeting `main` |
+
+- Create or check out `change/<name>` from `main` before propose, update, apply, or archive.
+- Reuse the existing branch for that change. Stop if unrelated files are dirty.
+- Do not batch tasks. Do not merge the PR unless asked.
+- Propose/update: one commit when that planning pass is complete. Archive: one commit, then push to update the PR.
+- Typo/comment work that skips OpenSpec still needs an explicit commit request.
+
+Full protocol: `AGENTS.md` section **Git for OpenSpec changes**.

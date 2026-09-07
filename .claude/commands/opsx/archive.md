@@ -28,6 +28,8 @@ Archive a completed change in the experimental workflow.
 
    Always announce: "Using change: <name>" and how to override (e.g., `/opsx:archive <other>`).
 
+   **Git (required):** Follow `AGENTS.md` "Git for OpenSpec changes". Stay on `change/<name>`. After archive file edits, one Conventional Commit, push, and ensure a PR to `main` exists (create it if apply did not). Do not merge unless asked.
+
    **Load current archive inputs before the existing archive checks:**
 
    After resolving the selected change and planning root, run:
@@ -157,6 +159,8 @@ Archive a completed change in the experimental workflow.
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Archived to:** the archive path derived from `planningHome.changesDir`/<target-name>/
+**Branch:** change/<change-name>
+**PR:** <url>
 **Specs:** ✓ Synced to main specs
 
 All artifacts complete. All tasks complete.
@@ -170,6 +174,8 @@ All artifacts complete. All tasks complete.
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Archived to:** the archive path derived from `planningHome.changesDir`/<target-name>/
+**Branch:** change/<change-name>
+**PR:** <url>
 **Specs:** No delta specs
 
 All artifacts complete. All tasks complete.
@@ -183,6 +189,8 @@ All artifacts complete. All tasks complete.
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Archived to:** the archive path derived from `planningHome.changesDir`/<target-name>/
+**Branch:** change/<change-name>
+**PR:** <url>
 **Specs:** Sync skipped (user chose to skip)
 
 **Warnings:**
@@ -215,6 +223,7 @@ Target archive directory already exists.
 - Don't block archive on warnings - just inform and confirm
 - Preserve .openspec.yaml when moving to archive (it moves with the directory)
 - Show clear summary of what happened
+- After archive edits: one Conventional Commit on `change/<name>`, push, ensure a PR to `main` exists; do not merge unless asked
 - If sync is requested, run the `/opsx:sync` workflow inline (agent-driven)
 - Never archive while a spec sync is still in flight — run the sync inline and verify the main specs before moving `changeRoot`
 - If delta specs exist, always run the sync assessment and show the combined summary before prompting
