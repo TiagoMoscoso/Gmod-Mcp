@@ -21,4 +21,4 @@
 
 - [x] 4.1 Add Companion dependencies and a `companion-mcp` (or existing) entrypoint that serves MCP and verify `pip install -e companion/` then the entrypoint serves `/mcp` locally
 - [x] 4.2 Update `companion/README.md` with client config example pointing at the localhost URL and verify the README does not tell users to bind `0.0.0.0`
-- [ ] 4.3 Run the Companion unit test suite in CI-local (`pytest`) and verify all new tests pass without a GMod process
+- [x] 4.3 Run the Companion unit test suite in CI-local (`pytest`) and verify all new tests pass without a GMod process
