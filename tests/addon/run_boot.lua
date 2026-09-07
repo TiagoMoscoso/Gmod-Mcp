@@ -127,6 +127,21 @@ if realm == "client" then
         ))
         os.exit(1)
     end
+
+    local offlineModel = AI_PLAYERS.BuildCompanionPopupModel(AI_PLAYERS.CompanionState.DISCONNECTED, "")
+    if offlineModel.copy_enabled or offlineModel.mcp_url ~= nil then
+        io.stderr:write("offline popup must not expose a copyable MCP URL\n")
+        os.exit(1)
+    end
+
+    local onlineModel = AI_PLAYERS.BuildCompanionPopupModel(
+        AI_PLAYERS.CompanionState.CONNECTED,
+        "http://127.0.0.1:8765/mcp"
+    )
+    if not onlineModel.copy_enabled or onlineModel.mcp_url ~= "http://127.0.0.1:8765/mcp" then
+        io.stderr:write("online popup must expose a copyable MCP URL\n")
+        os.exit(1)
+    end
 end
 
 print("ok: " .. realm .. " boot")

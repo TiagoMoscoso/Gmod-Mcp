@@ -104,6 +104,8 @@ function M.install(luaRoot, realm)
 
     util = {}
 
+    function util.AddNetworkString(_name) end
+
     local function encodeJson(value)
         local valueType = type(value)
         if valueType == "table" then
@@ -134,6 +136,21 @@ function M.install(luaRoot, realm)
 
     function timer.Create(_name, _delay, _repetitions, _callback) end
     function timer.Remove(_name) end
+
+    net = {}
+
+    function net.Start(_name) end
+    function net.WriteString(_value) end
+    function net.Broadcast() end
+    function net.Receive(_name, _callback) end
+
+    function IsValid(value)
+        return value ~= nil and value.IsValid == true
+    end
+
+    function SetClipboardText(value)
+        M.clipboard = value
+    end
 end
 
 return M

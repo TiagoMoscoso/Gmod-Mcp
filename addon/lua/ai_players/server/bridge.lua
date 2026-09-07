@@ -19,6 +19,9 @@ Bridge.EventPath = Bridge.GmodOut .. "/event.json"
 Bridge.ObserveRequestPath = Bridge.CompanionOut .. "/observe_request.json"
 Bridge.ObserveResultPath = Bridge.GmodOut .. "/observe_result.json"
 Bridge.StatusTimeoutSeconds = 2
+Bridge.McpUrl = nil
+
+util.AddNetworkString("AIPlayersCompanionStatus")
 
 local function ensureDir(path)
     if not file.Exists(path, "DATA") then
@@ -72,13 +75,27 @@ function Bridge.ApplyStatusMessage(message, currentTime)
     return false
 end
 
+function Bridge.BroadcastStatus()
+    net.Start("AIPlayersCompanionStatus")
+    net.WriteString(AI_PLAYERS.CompanionStatus or AI_PLAYERS.CompanionState.DISCONNECTED)
+    net.WriteString(Bridge.McpUrl or "")
+    net.Broadcast()
+end
+
 function Bridge.PollStatus()
     if not file.Exists(Bridge.StatusPath, "DATA") then
         AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+        Bridge.McpUrl = nil
+        Bridge.BroadcastStatus()
         return false
     end
 
-    return Bridge.ApplyStatusMessage(readJson(Bridge.StatusPath), now())
+    local ready = Bridge.ApplyStatusMessage(readJson(Bridge.StatusPath), now())
+    if not ready then
+        Bridge.McpUrl = nil
+    end
+    Bridge.BroadcastStatus()
+    return ready
 end
 
 function Bridge.Start()
@@ -107,6 +124,8 @@ function Bridge.Start()
         if okMessage and okMessage.type == AI_PLAYERS_BRIDGE_MESSAGE.HELLO_OK
             and okMessage.protocol_version == AI_PLAYERS_PROTOCOL_VERSION then
             AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.CONNECTED
+            Bridge.McpUrl = okMessage.payload and okMessage.payload.mcp_url or nil
+            Bridge.BroadcastStatus()
             timer.Remove("AIPlayersBridgeHelloPoll")
             return
         end
@@ -114,6 +133,8 @@ function Bridge.Start()
         local rejectMessage = file.Exists(Bridge.HelloRejectPath, "DATA") and readJson(Bridge.HelloRejectPath) or nil
         if rejectMessage and rejectMessage.type == AI_PLAYERS_BRIDGE_MESSAGE.HELLO_REJECT then
             AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.ERROR
+            Bridge.McpUrl = nil
+            Bridge.BroadcastStatus()
             timer.Remove("AIPlayersBridgeHelloPoll")
         end
     end)
