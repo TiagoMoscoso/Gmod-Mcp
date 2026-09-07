@@ -17,6 +17,7 @@ from ai_players_companion.mcp.catalog import (
     assert_no_forbidden_tools,
     registered_tool_names,
 )
+from ai_players_companion.mcp.session import SessionTracker
 from ai_players_companion.mcp.tools import register_management_tools
 
 # Matches the proposed URL in ADR-005 and the in-game popup. Never pass
@@ -37,14 +38,19 @@ def build_server(
     """Build a provider-agnostic FastMCP app bound to `host`/`port`.
 
     `registry` defaults to an empty `AgentRegistry` (the mock backing store;
-    `gmod-companion-bridge` will pass a bridge-backed one instead).
+    `gmod-companion-bridge` will pass a bridge-backed one instead). The
+    returned app carries a `.session` (`SessionTracker`) so callers such as
+    a health route can read whether a client is currently connected.
     """
+    session = SessionTracker()
     app = FastMCP(
         name="ai-players-companion",
         host=host,
         port=port,
         streamable_http_path=streamable_http_path,
+        lifespan=lambda _app: session.track(),
     )
+    app.session = session
     registry = registry if registry is not None else AgentRegistry()
     register_management_tools(app, registry)
     catalog = registered_tool_names(app)
