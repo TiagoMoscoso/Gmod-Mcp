@@ -1,7 +1,6 @@
 # Tests
 
-No test harness exists in this repository yet.
-
-Companion unit tests land with the [companion-mcp-host](../openspec/changes/companion-mcp-host)
-change, and must run without Garry's Mod. Protocol contract tests follow the
-same rule once a bridge transport is implemented.
+Companion unit tests live under `tests/companion/`. They run without a
+Garry's Mod process (see [companion/README.md](../companion/README.md#run-tests)).
+Protocol contract tests will follow the same rule once a bridge transport is
+implemented.
