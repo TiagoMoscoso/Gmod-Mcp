@@ -6,7 +6,7 @@
 
 ## 2. Mock registry and management tools
 
-- [ ] 2.1 Implement an in-memory agent registry with `agent_id`, name, context, capabilities, and lifecycle state and verify a unit test can seed and list records without GMod
+- [x] 2.1 Implement an in-memory agent registry with `agent_id`, name, context, capabilities, and lifecycle state and verify a unit test can seed and list records without GMod
 - [ ] 2.2 Implement MCP tool `list_agents` against the registry and verify a connected client receives seeded agents including `agent_id`
 - [ ] 2.3 Implement `get_agent` and `get_agent_status` keyed by `agent_id` and verify unknown ids return `unknown_agent`
 - [ ] 2.4 Assert the tool catalog has no per-character-name tools and verify a test fails if a `walter_*` tool is registered
