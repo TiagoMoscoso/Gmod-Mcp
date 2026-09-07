@@ -222,6 +222,41 @@ if realm == "server" then
         io.stderr:write("the final state transition must be pushed over the bridge\n")
         os.exit(1)
     end
+
+    -- spec: addon/spawn-lifecycle "Lifecycle gates actions" / "Disconnected
+    -- NPC is not a silent attacker" (task 2.4). No movement/combat
+    -- controller exists yet (design.md Non-Goals); this gate is what they
+    -- will call instead of re-deriving the halt rule.
+    for _, blockedState in ipairs({
+        AI_PLAYERS.State.INACTIVE,
+        AI_PLAYERS.State.WAITING_FOR_AGENT,
+        AI_PLAYERS.State.PAUSED,
+        AI_PLAYERS.State.ERROR,
+        AI_PLAYERS.State.DISCONNECTED,
+    }) do
+        AI_PLAYERS.Registry:SetState(walter.agentId, blockedState)
+        local canAct, reason = AI_PLAYERS.Registry:CanAct(walter.agentId, "move")
+        if canAct or reason ~= "not_active" then
+            io.stderr:write(string.format("%s must not be allowed to act\n", blockedState))
+            os.exit(1)
+        end
+    end
+
+    AI_PLAYERS.Registry:SetState(walter.agentId, AI_PLAYERS.State.ACTIVE)
+    if not AI_PLAYERS.Registry:CanAct(walter.agentId, "combat") then
+        io.stderr:write("ACTIVE with a granted capability must be allowed to act\n")
+        os.exit(1)
+    end
+    local canActUngranted, ungrantedReason = AI_PLAYERS.Registry:CanAct(walter.agentId, "fly")
+    if canActUngranted or ungrantedReason ~= "missing_capability" then
+        io.stderr:write("ACTIVE without a granted capability must be rejected as missing_capability\n")
+        os.exit(1)
+    end
+    local canActUnknown, unknownReason = AI_PLAYERS.Registry:CanAct("agt_does_not_exist", "move")
+    if canActUnknown or unknownReason ~= "unknown_agent" then
+        io.stderr:write("an unknown agent_id must be rejected as unknown_agent\n")
+        os.exit(1)
+    end
 end
 
 -- spec: No false MCP-ready UX — the client must default to disconnected.

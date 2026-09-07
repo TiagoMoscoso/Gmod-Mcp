@@ -23,6 +23,15 @@ AI_PLAYERS.MVP_CAPABILITIES = { "observe", "move", "chat", "combat" }
 local Registry = {}
 Registry.__index = Registry
 
+local function hasValue(list, value)
+    for _, item in ipairs(list) do
+        if item == value then
+            return true
+        end
+    end
+    return false
+end
+
 local nextAgentSequence = 0
 
 -- Opaque, never the display name or SteamID (design.md Decisions: "agent_id
@@ -117,6 +126,26 @@ function Registry:SetState(agentId, state)
     record.state = state
     AI_PLAYERS.Bridge.UpsertAgent(self:ToBridgeRecord(record))
     return record
+end
+
+-- Lifecycle gate every movement/combat controller MUST consult before
+-- acting (spec addon/spawn-lifecycle: "Lifecycle gates actions"). This
+-- change ships no controllers (design.md Non-Goals: "movement, combat
+-- execution"); movement-actions/combat-actions call this instead of
+-- re-deriving the INACTIVE/WAITING_FOR_AGENT/PAUSED/ERROR/DISCONNECTED
+-- halt rule (npc-lifecycle.md "Disconnected NPC is not a silent attacker").
+function Registry:CanAct(agentId, capability)
+    local record = self.byAgentId[agentId]
+    if not record then
+        return false, "unknown_agent"
+    end
+    if record.state ~= AI_PLAYERS.State.ACTIVE then
+        return false, "not_active"
+    end
+    if capability and not hasValue(record.capabilities, capability) then
+        return false, "missing_capability"
+    end
+    return true
 end
 
 -- WAITING_FOR_AGENT/DISCONNECTED <-> ACTIVE per the MVP policy (design.md
