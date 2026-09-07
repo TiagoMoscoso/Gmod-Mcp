@@ -116,6 +116,60 @@ if realm == "server" then
         io.stderr:write("handshake rejection must become error\n")
         os.exit(1)
     end
+
+    -- spec: addon/spawn-lifecycle "Stable agent_id after bind" / "Inactive
+    -- unknown to MCP" (task 2.2). A plain table stands in for an Entity:
+    -- Registry never calls entity methods, only uses it as a lookup key.
+    local placeholder = { debugName = "placeholder" }
+    AI_PLAYERS.Registry:TrackInactive(placeholder)
+
+    if not AI_PLAYERS.Registry:IsBindable(placeholder) then
+        io.stderr:write("a freshly spawned placeholder must be bindable\n")
+        os.exit(1)
+    end
+
+    if next(AI_PLAYERS.Registry.byAgentId) ~= nil then
+        io.stderr:write("an unbound spawn must not appear in the agent_id registry (list_agents equivalent)\n")
+        os.exit(1)
+    end
+
+    local bot = { debugName = "bot" }
+    local walter = AI_PLAYERS.Registry:Promote(
+        placeholder,
+        bot,
+        "Walter",
+        "You are Walter, my mechanic friend.",
+        AI_PLAYERS.MVP_CAPABILITIES
+    )
+    if not walter or walter.agentId == nil or walter.name ~= "Walter"
+        or walter.context ~= "You are Walter, my mechanic friend."
+        or walter.state ~= AI_PLAYERS.State.WAITING_FOR_AGENT then
+        io.stderr:write("a valid bind must record agent_id, name, context, and state\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByEntity(placeholder) ~= nil then
+        io.stderr:write("promotion must move the record off the old placeholder key\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByEntity(bot) ~= walter then
+        io.stderr:write("promotion must track the record under the new entity handle\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId) ~= walter then
+        io.stderr:write("a bound agent must be resolvable by agent_id\n")
+        os.exit(1)
+    end
+
+    -- The registry pushes bound records over the bridge so Companion
+    -- list_agents/get_agent reflect them (proven end to end against the
+    -- same file shape by tests/companion/test_file_ipc_registry.py).
+    local upsertRaw = file.Read(AI_PLAYERS.Bridge.RegistryUpsertPath, "DATA")
+    if not upsertRaw or not string.find(upsertRaw, walter.agentId, 1, true)
+        or not string.find(upsertRaw, "Walter", 1, true)
+        or not string.find(upsertRaw, "combat", 1, true) then
+        io.stderr:write("bind must upsert agent_id, name, and MVP capabilities over the bridge\n")
+        os.exit(1)
+    end
 end
 
 -- spec: No false MCP-ready UX — the client must default to disconnected.
