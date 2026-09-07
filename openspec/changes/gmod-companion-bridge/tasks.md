@@ -21,4 +21,4 @@
 
 ## 4. Tests
 
-- [ ] 4.1 Add Python contract tests for hello, mismatch, action, event, and observe using a fake GMod transport peer and verify `pytest` passes without launching Garry's Mod
+- [x] 4.1 Add Python contract tests for hello, mismatch, action, event, and observe using a fake GMod transport peer and verify `pytest` passes without launching Garry's Mod
