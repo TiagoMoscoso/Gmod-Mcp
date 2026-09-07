@@ -13,7 +13,7 @@
 ## 3. Companion skeleton
 
 - [x] 3.1 Add `companion/pyproject.toml` for Python 3.12+ with package `ai_players_companion` and a console script and verify `pip install -e companion/` (or equivalent) succeeds
-- [ ] 3.2 Add `companion/src/ai_players_companion/protocol.py` with `PROTOCOL_VERSION = "1"` matching the GLua constant and verify both files contain the same version string
+- [x] 3.2 Add `companion/src/ai_players_companion/protocol.py` with `PROTOCOL_VERSION = "1"` matching the GLua constant and verify both files contain the same version string
 - [ ] 3.3 Add a `__main__` / console entry that prints that MCP is not hosted yet and exits 0 and verify running the script does not bind port 8765 or serve `/mcp`
 - [ ] 3.4 Write `companion/README.md` covering venv, install, and run and verify a new reader can start the process from those steps alone
 
