@@ -180,6 +180,16 @@ if realm == "server" then
         os.exit(1)
     end
 
+    -- spec: addon/toolgun-bind "MVP capabilities are granted at bind" (3.4).
+    if #walter.capabilities ~= 4
+        or not table.concat(walter.capabilities, ","):find("observe", 1, true)
+        or not table.concat(walter.capabilities, ","):find("move", 1, true)
+        or not table.concat(walter.capabilities, ","):find("chat", 1, true)
+        or not table.concat(walter.capabilities, ","):find("combat", 1, true) then
+        io.stderr:write("a bind must grant exactly the hardcoded MVP capabilities\n")
+        os.exit(1)
+    end
+
     -- The registry pushes bound records over the bridge so Companion
     -- list_agents/get_agent reflect them (proven end to end against the
     -- same file shape by tests/companion/test_file_ipc_registry.py).
