@@ -42,4 +42,15 @@ if not ok then
     os.exit(1)
 end
 
+-- spec: Configuration surface without live bind — the Companion host
+-- convar must default to loopback, never a public bind address.
+local companionHost = GetConVar("ai_players_companion_host"):GetString()
+if companionHost ~= "127.0.0.1" then
+    io.stderr:write(string.format(
+        "ai_players_companion_host must default to 127.0.0.1, got %s\n",
+        companionHost
+    ))
+    os.exit(1)
+end
+
 print("ok: " .. realm .. " boot")

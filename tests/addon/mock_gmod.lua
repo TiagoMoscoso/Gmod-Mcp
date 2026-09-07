@@ -23,6 +23,27 @@ function M.install(luaRoot, realm)
     -- Real GMod networks the file to connected clients; boot tests only
     -- need the call to be a harmless no-op.
     function AddCSLuaFile(_path) end
+
+    -- Convar flag bits are meaningless outside the engine; boot tests
+    -- only need them to exist as numbers.
+    FCVAR_ARCHIVE = 128
+    FCVAR_REPLICATED = 8192
+
+    local convars = {}
+
+    function CreateConVar(name, default, _flags, _help)
+        local value = tostring(default)
+        local convar = {
+            GetString = function() return value end,
+            GetInt = function() return tonumber(value) end,
+        }
+        convars[name] = convar
+        return convar
+    end
+
+    function GetConVar(name)
+        return convars[name]
+    end
 end
 
 return M
