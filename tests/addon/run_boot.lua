@@ -133,6 +133,26 @@ if realm == "server" then
         os.exit(1)
     end
 
+    -- spec: addon/toolgun-bind "Bind requires name and context" (3.2).
+    -- AI_PLAYERS.Bind delegates this exact check to Registry:Promote
+    -- (addon/lua/ai_players/server/spawn.lua); exercised here directly
+    -- since Bind itself needs a real player.CreateNextBot slot.
+    local rejectedEmptyName, emptyNameReason = AI_PLAYERS.Registry:Promote(placeholder, {}, "", "context")
+    local rejectedEmptyContext, emptyContextReason = AI_PLAYERS.Registry:Promote(placeholder, {}, "Walter", "")
+    if rejectedEmptyName ~= nil or emptyNameReason ~= "invalid_bind"
+        or rejectedEmptyContext ~= nil or emptyContextReason ~= "invalid_bind" then
+        io.stderr:write("bind with an empty name or context must be rejected as invalid_bind\n")
+        os.exit(1)
+    end
+    if next(AI_PLAYERS.Registry.byAgentId) ~= nil then
+        io.stderr:write("a rejected bind must not create an agent_id\n")
+        os.exit(1)
+    end
+    if not AI_PLAYERS.Registry:IsBindable(placeholder) then
+        io.stderr:write("a rejected bind must leave the placeholder bindable\n")
+        os.exit(1)
+    end
+
     local bot = { debugName = "bot" }
     local walter = AI_PLAYERS.Registry:Promote(
         placeholder,
