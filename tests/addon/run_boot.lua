@@ -257,6 +257,45 @@ if realm == "server" then
         io.stderr:write("an unknown agent_id must be rejected as unknown_agent\n")
         os.exit(1)
     end
+
+    -- spec: addon/spawn-lifecycle "Two bound NPCs have distinct ids" (2.5).
+    local placeholderB = { debugName = "placeholderB" }
+    AI_PLAYERS.Registry:TrackInactive(placeholderB)
+    local botB = { debugName = "botB" }
+    local shepherd = AI_PLAYERS.Registry:Promote(
+        placeholderB,
+        botB,
+        "Shepherd",
+        "You are Shepherd, a guard dog.",
+        AI_PLAYERS.MVP_CAPABILITIES
+    )
+    if not shepherd or shepherd.agentId == nil or shepherd.agentId == walter.agentId
+        or shepherd.name == walter.name then
+        io.stderr:write("a second bind must get a distinct agent_id and name\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId) == nil
+        or AI_PLAYERS.Registry:GetByAgentId(shepherd.agentId) == nil then
+        io.stderr:write("both bound agents must be simultaneously resolvable by agent_id (list_agents equivalent)\n")
+        os.exit(1)
+    end
+
+    -- spec: "Removal drops the agent" — forgetting one must not touch the
+    -- other (multi-agent data model, not a shared slot).
+    AI_PLAYERS.Registry:Forget(botB)
+    if AI_PLAYERS.Registry:GetByAgentId(shepherd.agentId) ~= nil then
+        io.stderr:write("Forget must drop the targeted agent\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId) == nil then
+        io.stderr:write("forgetting one agent must not affect a distinct agent\n")
+        os.exit(1)
+    end
+    local removeRaw = file.Read(AI_PLAYERS.Bridge.RegistryRemovePath, "DATA")
+    if not removeRaw or not string.find(removeRaw, shepherd.agentId, 1, true) then
+        io.stderr:write("forgetting a bound agent must remove it over the bridge\n")
+        os.exit(1)
+    end
 end
 
 -- spec: No false MCP-ready UX — the client must default to disconnected.

@@ -9,7 +9,7 @@
 - [x] 2.2 Implement the registry (`agent_id`, name, context, capabilities, state, entity handle) and verify an unbound spawn is not listed on `list_agents`
 - [x] 2.3 Implement state transitions INACTIVE → WAITING_FOR_AGENT → ACTIVE and ACTIVE → DISCONNECTED on bridge loss and verify `get_agent_status` reflects the state
 - [x] 2.4 Halt locomotion/attack inputs in INACTIVE, WAITING_FOR_AGENT, PAUSED, ERROR, and DISCONNECTED and verify a disconnected NPC does not keep shooting or roaming
-- [ ] 2.5 Support two simultaneous bound AI Players in the data model and verify `list_agents` returns two distinct `agent_id`s
+- [x] 2.5 Support two simultaneous bound AI Players in the data model and verify `list_agents` returns two distinct `agent_id`s
 
 ## 3. Tool Gun bind
 
