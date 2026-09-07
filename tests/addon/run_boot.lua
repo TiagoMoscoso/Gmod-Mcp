@@ -64,6 +64,58 @@ if realm == "server" then
         ))
         os.exit(1)
     end
+
+    AI_PLAYERS.Bridge.ApplyStatusMessage({
+        protocol_version = AI_PLAYERS_PROTOCOL_VERSION,
+        payload = {
+            ready = true,
+            state = "healthy",
+            updated_at = 10,
+        },
+    }, 10)
+    if AI_PLAYERS.CompanionStatus ~= AI_PLAYERS.CompanionState.CONNECTED then
+        io.stderr:write("fresh healthy Companion status must become connected\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.Bridge.ApplyStatusMessage({
+        protocol_version = "mismatch",
+        payload = {
+            ready = true,
+            state = "healthy",
+            updated_at = 10,
+        },
+    }, 10)
+    if AI_PLAYERS.CompanionStatus ~= AI_PLAYERS.CompanionState.DISCONNECTED then
+        io.stderr:write("protocol mismatch status must become disconnected\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.Bridge.ApplyStatusMessage({
+        protocol_version = AI_PLAYERS_PROTOCOL_VERSION,
+        payload = {
+            ready = true,
+            state = "healthy",
+            updated_at = 1,
+        },
+    }, 10)
+    if AI_PLAYERS.CompanionStatus ~= AI_PLAYERS.CompanionState.DISCONNECTED then
+        io.stderr:write("stale Companion status must become disconnected\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.Bridge.ApplyStatusMessage({
+        protocol_version = AI_PLAYERS_PROTOCOL_VERSION,
+        payload = {
+            ready = false,
+            state = "protocol_mismatch",
+            updated_at = 10,
+        },
+    }, 10)
+    if AI_PLAYERS.CompanionStatus ~= AI_PLAYERS.CompanionState.ERROR then
+        io.stderr:write("handshake rejection must become error\n")
+        os.exit(1)
+    end
 end
 
 -- spec: No false MCP-ready UX — the client must default to disconnected.

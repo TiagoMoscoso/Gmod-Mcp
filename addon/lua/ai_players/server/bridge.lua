@@ -10,6 +10,7 @@ Bridge.CompanionOut = Bridge.Root .. "/companion_out"
 Bridge.HelloPath = Bridge.GmodOut .. "/hello.json"
 Bridge.HelloOkPath = Bridge.CompanionOut .. "/hello_ok.json"
 Bridge.HelloRejectPath = Bridge.CompanionOut .. "/hello_reject.json"
+Bridge.StatusPath = Bridge.CompanionOut .. "/status.json"
 Bridge.RegistryUpsertPath = Bridge.GmodOut .. "/registry_upsert.json"
 Bridge.RegistryRemovePath = Bridge.GmodOut .. "/registry_remove.json"
 Bridge.ActionRequestPath = Bridge.CompanionOut .. "/action_request.json"
@@ -17,6 +18,7 @@ Bridge.ActionResultPath = Bridge.GmodOut .. "/action_result.json"
 Bridge.EventPath = Bridge.GmodOut .. "/event.json"
 Bridge.ObserveRequestPath = Bridge.CompanionOut .. "/observe_request.json"
 Bridge.ObserveResultPath = Bridge.GmodOut .. "/observe_result.json"
+Bridge.StatusTimeoutSeconds = 2
 
 local function ensureDir(path)
     if not file.Exists(path, "DATA") then
@@ -34,6 +36,49 @@ local function readJson(path)
         return nil
     end
     return util.JSONToTable(raw)
+end
+
+local function now()
+    if CurTime then
+        return CurTime()
+    end
+    return os.time()
+end
+
+function Bridge.ApplyStatusMessage(message, currentTime)
+    if not message or message.protocol_version ~= AI_PLAYERS_PROTOCOL_VERSION then
+        AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+        return false
+    end
+
+    local payload = message.payload or {}
+    local updatedAt = tonumber(payload.updated_at)
+    if updatedAt and currentTime - updatedAt > Bridge.StatusTimeoutSeconds then
+        AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+        return false
+    end
+
+    if payload.ready == true and payload.state == "healthy" then
+        AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.CONNECTED
+        return true
+    end
+
+    if payload.state == "protocol_mismatch" or payload.state == "invalid_hello" then
+        AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.ERROR
+        return false
+    end
+
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+    return false
+end
+
+function Bridge.PollStatus()
+    if not file.Exists(Bridge.StatusPath, "DATA") then
+        AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+        return false
+    end
+
+    return Bridge.ApplyStatusMessage(readJson(Bridge.StatusPath), now())
 end
 
 function Bridge.Start()
@@ -56,6 +101,8 @@ function Bridge.Start()
     ))
 
     timer.Create("AIPlayersBridgeHelloPoll", 0.5, 20, function()
+        Bridge.PollStatus()
+
         local okMessage = file.Exists(Bridge.HelloOkPath, "DATA") and readJson(Bridge.HelloOkPath) or nil
         if okMessage and okMessage.type == AI_PLAYERS_BRIDGE_MESSAGE.HELLO_OK
             and okMessage.protocol_version == AI_PLAYERS_PROTOCOL_VERSION then
@@ -69,6 +116,10 @@ function Bridge.Start()
             AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.ERROR
             timer.Remove("AIPlayersBridgeHelloPoll")
         end
+    end)
+
+    timer.Create("AIPlayersBridgeStatusPoll", 1, 0, function()
+        Bridge.PollStatus()
     end)
 end
 

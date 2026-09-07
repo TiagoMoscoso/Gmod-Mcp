@@ -143,6 +143,8 @@ class FileIpcBridge:
         self._action_results: dict[str, dict[str, Any]] = {}
         self._events: list[dict[str, Any]] = []
         self._observe_results: dict[str, dict[str, Any]] = {}
+        self._ready = False
+        self._state = "waiting_for_gmod"
 
     @property
     def paths(self) -> BridgePaths:
@@ -164,6 +166,7 @@ class FileIpcBridge:
     def _run(self) -> None:
         while not self._stop.is_set():
             self.poll_once()
+            self._write_status(ready=self._ready, state=self._state)
             self._stop.wait(self._poll_interval)
 
     def poll_once(self) -> None:
@@ -353,6 +356,8 @@ class FileIpcBridge:
         self._write_status(ready=False, state=reason)
 
     def _write_status(self, *, ready: bool, state: str) -> None:
+        self._ready = ready
+        self._state = state
         _write_json(
             self._paths.status_path,
             envelope(
