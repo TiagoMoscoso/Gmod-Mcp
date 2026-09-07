@@ -170,6 +170,58 @@ if realm == "server" then
         io.stderr:write("bind must upsert agent_id, name, and MVP capabilities over the bridge\n")
         os.exit(1)
     end
+
+    -- spec: addon/spawn-lifecycle "Bind moves to waiting" / "Companion loss
+    -- disconnects" (task 2.3). A healthy bridge with no MCP client attached
+    -- is still a session drop (npc-lifecycle.md: "ACTIVE / PAUSED ->
+    -- DISCONNECTED | Bridge or session drop"), not a silent "stay ACTIVE".
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = false
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.WAITING_FOR_AGENT then
+        io.stderr:write("reconcile must leave WAITING_FOR_AGENT alone while no client is connected\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.CONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = true
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.ACTIVE then
+        io.stderr:write("reconcile must move WAITING_FOR_AGENT to ACTIVE once bridge and client are healthy\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.CONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = false
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.DISCONNECTED then
+        io.stderr:write("reconcile must disconnect ACTIVE when no MCP client is attached, even if the bridge is healthy\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = false
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.DISCONNECTED then
+        io.stderr:write("reconcile must keep DISCONNECTED while the bridge stays unhealthy\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.CONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = true
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.ACTIVE then
+        io.stderr:write("reconcile must restore DISCONNECTED to ACTIVE once the bridge and client are both back\n")
+        os.exit(1)
+    end
+
+    -- get_agent_status reflects state via the same bridge upsert file
+    -- (proven end to end by tests/companion/test_get_agent_tools.py).
+    local activeUpsertRaw = file.Read(AI_PLAYERS.Bridge.RegistryUpsertPath, "DATA")
+    if not activeUpsertRaw or not string.find(activeUpsertRaw, "ACTIVE", 1, true) then
+        io.stderr:write("the final state transition must be pushed over the bridge\n")
+        os.exit(1)
+    end
 end
 
 -- spec: No false MCP-ready UX — the client must default to disconnected.

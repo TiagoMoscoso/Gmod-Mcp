@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .agents.registry import AgentRegistry
 from .mcp.server import build_server
+from .mcp.session import SessionTracker
 from .protocol import PROTOCOL_VERSION
 from .transport.file_ipc import BridgePaths, FileIpcBridge
 
@@ -20,12 +21,19 @@ def main() -> None:
     args = parser.parse_args()
 
     registry = AgentRegistry()
+    # Shared with the bridge so its status payload reports real MCP client
+    # connectivity, not just file IPC health (ai-player-spawn-and-bind).
+    session = SessionTracker()
     bridge = None
     if args.gmod_data:
-        bridge = FileIpcBridge(BridgePaths.from_gmod_data(Path(args.gmod_data)), registry=registry)
+        bridge = FileIpcBridge(
+            BridgePaths.from_gmod_data(Path(args.gmod_data)),
+            registry=registry,
+            session=session,
+        )
         bridge.start()
 
-    app = build_server(registry, bridge=bridge)
+    app = build_server(registry, bridge=bridge, session=session)
     print(
         f"ai-players-companion (protocol {PROTOCOL_VERSION}): "
         f"serving MCP at http://{app.settings.host}:{app.settings.port}{app.settings.streamable_http_path}"

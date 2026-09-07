@@ -35,6 +35,7 @@ def build_server(
     registry: AgentRegistry | None = None,
     bridge=None,
     *,
+    session: SessionTracker | None = None,
     host: str = DEFAULT_HOST,
     port: int = DEFAULT_PORT,
     streamable_http_path: str = DEFAULT_STREAMABLE_HTTP_PATH,
@@ -42,11 +43,14 @@ def build_server(
     """Build a provider-agnostic FastMCP app bound to `host`/`port`.
 
     `registry` defaults to an empty `AgentRegistry` (the mock backing store;
-    `gmod-companion-bridge` will pass a bridge-backed one instead). The
-    returned app carries a `.session` (`SessionTracker`) so callers such as
-    a health route can read whether a client is currently connected.
+    `gmod-companion-bridge` passes a bridge-backed one instead). `session`
+    defaults to a fresh `SessionTracker`; pass the same tracker used by a
+    `FileIpcBridge` so its bridge_status payload can report real MCP client
+    connectivity (`ai-player-spawn-and-bind` ACTIVE policy) instead of
+    always "no client". The returned app carries a `.session` so callers
+    such as a health route can read whether a client is currently connected.
     """
-    session = SessionTracker()
+    session = session if session is not None else SessionTracker()
     app = FastMCP(
         name="ai-players-companion",
         host=host,

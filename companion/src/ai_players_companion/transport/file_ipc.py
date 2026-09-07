@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_players_companion.agents.registry import AgentRecord, AgentRegistry
+from ai_players_companion.mcp.session import SessionTracker
 from ai_players_companion.protocol import (
     PROTOCOL_VERSION,
     TYPE_BRIDGE_STATUS,
@@ -127,10 +128,12 @@ class FileIpcBridge:
         paths: BridgePaths,
         *,
         registry: AgentRegistry | None = None,
+        session: SessionTracker | None = None,
         poll_interval: float = 0.25,
     ) -> None:
         self._paths = paths
         self._registry = registry if registry is not None else AgentRegistry()
+        self._session = session
         self._poll_interval = poll_interval
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -366,6 +369,10 @@ class FileIpcBridge:
                     "ready": ready,
                     "state": state,
                     "updated_at": time.time(),
+                    # Distinct from bridge health: an AI Player only goes
+                    # ACTIVE once an MCP client is actually connected too
+                    # (design.md Decisions: "ACTIVE policy").
+                    "mcp_session_connected": self._session.is_connected if self._session is not None else False,
                 },
             ),
         )

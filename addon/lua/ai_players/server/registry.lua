@@ -119,6 +119,25 @@ function Registry:SetState(agentId, state)
     return record
 end
 
+-- WAITING_FOR_AGENT/DISCONNECTED <-> ACTIVE per the MVP policy (design.md
+-- Decisions: "ACTIVE policy"). PAUSED and ERROR are not touched here: PAUSED
+-- is manual-only in MVP and ERROR needs an explicit rebind.
+function Registry:ReconcileLifecycle()
+    local ready = AI_PLAYERS.CompanionStatus == AI_PLAYERS.CompanionState.CONNECTED
+        and AI_PLAYERS.Bridge.McpSessionConnected == true
+
+    for agentId, record in pairs(self.byAgentId) do
+        if ready then
+            if record.state == AI_PLAYERS.State.WAITING_FOR_AGENT
+                or record.state == AI_PLAYERS.State.DISCONNECTED then
+                self:SetState(agentId, AI_PLAYERS.State.ACTIVE)
+            end
+        elseif record.state == AI_PLAYERS.State.ACTIVE then
+            self:SetState(agentId, AI_PLAYERS.State.DISCONNECTED)
+        end
+    end
+end
+
 -- Removal drops the agent (spec addon/spawn-lifecycle: "Removal drops the
 -- agent"). A never-bound INACTIVE record has no agentId, so there is
 -- nothing to tell the bridge about.
