@@ -14,6 +14,8 @@ Spikes are time-boxed experiments. They produce a decision for an **Open** quest
 
 **Output:** chosen transport + failure modes written back into `companion.md`.
 
+**Result:** Completed 2026-09-07 in the `gmod-companion-bridge` change. MVP uses file IPC under `garrysmod/data/ai_players/bridge/`; GLua HTTP to `127.0.0.1` was not selected.
+
 ## SPK-MCP-001 — MCP host
 
 **Decides:** [OQ-MCP-003](../requirements/open-questions.md#oq-mcp-003-mcp-transport-flavor) and whether Python SDK/FastAPI is enough  

@@ -44,6 +44,119 @@ function M.install(luaRoot, realm)
     function GetConVar(name)
         return convars[name]
     end
+
+    local dataRoot = os.getenv("AI_PLAYERS_TEST_DATA") or "/tmp/ai_players_glua_test_data"
+
+    local function dataPath(path)
+        return dataRoot .. "/" .. path
+    end
+
+    local function shellQuote(value)
+        return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
+    end
+
+    file = {}
+
+    function file.Exists(path, realmName)
+        if realmName ~= "DATA" then
+            return false
+        end
+        local handle = io.open(dataPath(path), "r")
+        if handle then
+            handle:close()
+            return true
+        end
+        local ok = os.execute(string.format("[ -d %s ]", shellQuote(dataPath(path))))
+        return ok == true or ok == 0
+    end
+
+    function file.CreateDir(path)
+        os.execute(string.format("mkdir -p %s", shellQuote(dataPath(path))))
+    end
+
+    function file.Write(path, value)
+        local fullPath = dataPath(path)
+        local dir = fullPath:match("(.+)/[^/]+$")
+        if dir then
+            os.execute(string.format("mkdir -p %s", shellQuote(dir)))
+        end
+        local handle = assert(io.open(fullPath, "w"))
+        handle:write(value)
+        handle:close()
+    end
+
+    function file.Read(path, realmName)
+        if realmName ~= "DATA" then
+            return nil
+        end
+        local handle = io.open(dataPath(path), "r")
+        if not handle then
+            return nil
+        end
+        local value = handle:read("*a")
+        handle:close()
+        return value
+    end
+
+    function file.Delete(path)
+        os.remove(dataPath(path))
+    end
+
+    util = {}
+
+    function util.AddNetworkString(_name) end
+
+    local function encodeJson(value)
+        local valueType = type(value)
+        if valueType == "table" then
+            local parts = {}
+            for key, item in pairs(value) do
+                parts[#parts + 1] = encodeJson(tostring(key)) .. ":" .. encodeJson(item)
+            end
+            return "{" .. table.concat(parts, ",") .. "}"
+        end
+        if valueType == "string" then
+            return string.format("%q", value)
+        end
+        if valueType == "boolean" or valueType == "number" then
+            return tostring(value)
+        end
+        return "null"
+    end
+
+    function util.TableToJSON(value, _pretty)
+        return encodeJson(value)
+    end
+
+    function util.JSONToTable(_value)
+        return nil
+    end
+
+    timer = {}
+
+    function timer.Create(_name, _delay, _repetitions, _callback) end
+    function timer.Remove(_name) end
+
+    net = {}
+
+    function net.Start(_name) end
+    function net.WriteString(_value) end
+    function net.Broadcast() end
+    function net.Receive(_name, _callback) end
+
+    function IsValid(value)
+        return value ~= nil and value.IsValid == true
+    end
+
+    function SetClipboardText(value)
+        M.clipboard = value
+    end
+
+    gui = {}
+
+    function gui.OpenURL(value)
+        M.openedUrl = value
+    end
 end
 
 return M

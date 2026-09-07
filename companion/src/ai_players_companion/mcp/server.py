@@ -20,7 +20,7 @@ from ai_players_companion.mcp.catalog import (
     registered_tool_names,
 )
 from ai_players_companion.mcp.session import SessionTracker
-from ai_players_companion.mcp.tools import register_management_tools
+from ai_players_companion.mcp.tools import register_bridge_tools, register_management_tools
 from ai_players_companion.protocol import PROTOCOL_VERSION
 
 # Matches the proposed URL in ADR-005 and the in-game popup. Never pass
@@ -33,6 +33,7 @@ DEFAULT_STREAMABLE_HTTP_PATH = "/mcp"
 
 def build_server(
     registry: AgentRegistry | None = None,
+    bridge=None,
     *,
     host: str = DEFAULT_HOST,
     port: int = DEFAULT_PORT,
@@ -56,6 +57,8 @@ def build_server(
     app.session = session
     registry = registry if registry is not None else AgentRegistry()
     register_management_tools(app, registry)
+    if bridge is not None:
+        register_bridge_tools(app, bridge)
     catalog = registered_tool_names(app)
     assert_no_forbidden_tools(catalog)
     assert_no_character_scoped_tools(

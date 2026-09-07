@@ -4,7 +4,7 @@ Decisions that must not be made silently. Each item is **Open** unless later clo
 
 Template: question, context, options, trade-offs, impact, when it must be decided.
 
-**Recently closed:** [OQ-MCP-003](#oq-mcp-003-mcp-transport-flavor) — Streamable HTTP confirmed by SPK-MCP-001. [OQ-AGT-001](#oq-agt-001-agent-orchestration-model) — MVP Model A, v2 Model C required. [ADR-007](../architecture/decisions/ADR-007-mvp-model-a-v2-model-c.md), [v2-backlog.md](../planning/v2-backlog.md).
+**Recently closed:** [OQ-MCP-003](#oq-mcp-003-mcp-transport-flavor) — Streamable HTTP confirmed by SPK-MCP-001. [OQ-TRN-001](#oq-trn-001-gmod-companion-transport) — file IPC under `garrysmod/data/` confirmed by SPK-TRN-001 for MVP. [OQ-AGT-001](#oq-agt-001-agent-orchestration-model) — MVP Model A, v2 Model C required. [ADR-007](../architecture/decisions/ADR-007-mvp-model-a-v2-model-c.md), [v2-backlog.md](../planning/v2-backlog.md).
 
 ---
 
@@ -254,24 +254,25 @@ Template: question, context, options, trade-offs, impact, when it must be decide
 
 ### OQ-TRN-001 — GMod ↔ Companion transport
 
-**Status:** OPEN
+**Status:** CLOSED for MVP
 
 **Question:** How do GLua and the Companion exchange actions, events, and state?
 
 **Context:** GLua cannot listen. Private-IP HTTP is often blocked on listen/SP. Existing GMod MCP bridges use file IPC under `garrysmod/data/`. Binary websocket modules exist but add Workshop/ABI cost.
 
-**Options:**
+**Resolution:**
 
-- File-based IPC (GMA-friendly, no extra DLL)
-- GLua HTTP client to Companion (may fail on 127.0.0.1)
-- Native socket / websocket module
-- `gm_process`-style stdio to a child Companion
+- **File IPC under `garrysmod/data/ai_players/bridge/` for MVP.** SPK-TRN-001 verified `hello` / `hello_ok` on a 16-player Sandbox listen server on `gm_construct`.
+- GLua `HTTP()` to `127.0.0.1` is not the MVP bridge because private-IP HTTP remains unreliable in listen/singleplayer contexts.
+- Native sockets/websocket and child-process stdio remain non-MVP alternatives if a later change needs them.
 
-**Trade-offs:** Files are clumsy but proven. HTTP is clean when allowed. Native sockets help voice later but poison Lua-only Workshop.
+**Closed:** 2026-09-07
+
+**Trade-offs:** Files are clumsy but proven and Workshop-safe. HTTP is clean when allowed. Native sockets help voice later but add Workshop/ABI cost.
 
 **Impact:** Entire runtime, MVP feasibility, [technical-spikes.md](../planning/technical-spikes.md).
 
-**Decision required:** before implementing the vertical slice. Highest-priority spike.
+**Decision required:** complete for MVP; revisit only if requirements exceed file IPC.
 
 ---
 

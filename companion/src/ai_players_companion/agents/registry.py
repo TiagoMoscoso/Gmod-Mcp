@@ -46,7 +46,15 @@ class AgentRegistry:
 
     def seed(self, record: AgentRecord) -> None:
         """Insert or replace a record. Tests use this in place of a GMod bridge."""
+        self.upsert(record)
+
+    def upsert(self, record: AgentRecord) -> None:
+        """Insert or replace an AI Player record from the bridge."""
         self._agents[record.agent_id] = record
+
+    def remove(self, agent_id: str) -> None:
+        """Forget an AI Player record; missing ids are already absent."""
+        self._agents.pop(agent_id, None)
 
     def list_agents(self) -> list[AgentRecord]:
         return list(self._agents.values())

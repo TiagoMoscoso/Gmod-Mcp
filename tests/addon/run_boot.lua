@@ -64,6 +64,58 @@ if realm == "server" then
         ))
         os.exit(1)
     end
+
+    AI_PLAYERS.Bridge.ApplyStatusMessage({
+        protocol_version = AI_PLAYERS_PROTOCOL_VERSION,
+        payload = {
+            ready = true,
+            state = "healthy",
+            updated_at = 10,
+        },
+    }, 10)
+    if AI_PLAYERS.CompanionStatus ~= AI_PLAYERS.CompanionState.CONNECTED then
+        io.stderr:write("fresh healthy Companion status must become connected\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.Bridge.ApplyStatusMessage({
+        protocol_version = "mismatch",
+        payload = {
+            ready = true,
+            state = "healthy",
+            updated_at = 10,
+        },
+    }, 10)
+    if AI_PLAYERS.CompanionStatus ~= AI_PLAYERS.CompanionState.DISCONNECTED then
+        io.stderr:write("protocol mismatch status must become disconnected\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.Bridge.ApplyStatusMessage({
+        protocol_version = AI_PLAYERS_PROTOCOL_VERSION,
+        payload = {
+            ready = true,
+            state = "healthy",
+            updated_at = 1,
+        },
+    }, 10)
+    if AI_PLAYERS.CompanionStatus ~= AI_PLAYERS.CompanionState.DISCONNECTED then
+        io.stderr:write("stale Companion status must become disconnected\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.Bridge.ApplyStatusMessage({
+        protocol_version = AI_PLAYERS_PROTOCOL_VERSION,
+        payload = {
+            ready = false,
+            state = "protocol_mismatch",
+            updated_at = 10,
+        },
+    }, 10)
+    if AI_PLAYERS.CompanionStatus ~= AI_PLAYERS.CompanionState.ERROR then
+        io.stderr:write("handshake rejection must become error\n")
+        os.exit(1)
+    end
 end
 
 -- spec: No false MCP-ready UX — the client must default to disconnected.
@@ -73,6 +125,38 @@ if realm == "client" then
             "client must default CompanionStatus to disconnected, got %s\n",
             tostring(AI_PLAYERS.CompanionStatus)
         ))
+        os.exit(1)
+    end
+
+    local offlineModel = AI_PLAYERS.BuildCompanionPopupModel(AI_PLAYERS.CompanionState.DISCONNECTED, "")
+    if offlineModel.copy_enabled or offlineModel.mcp_url ~= nil then
+        io.stderr:write("offline popup must not expose a copyable MCP URL\n")
+        os.exit(1)
+    end
+    if not offlineModel.setup_guide_enabled or offlineModel.setup_guide_url == nil then
+        io.stderr:write("offline popup must expose the Setup Guide target\n")
+        os.exit(1)
+    end
+
+    local onlineModel = AI_PLAYERS.BuildCompanionPopupModel(
+        AI_PLAYERS.CompanionState.CONNECTED,
+        "http://127.0.0.1:8765/mcp"
+    )
+    if not onlineModel.copy_enabled or onlineModel.mcp_url ~= "http://127.0.0.1:8765/mcp" then
+        io.stderr:write("online popup must expose a copyable MCP URL\n")
+        os.exit(1)
+    end
+    if onlineModel.setup_guide_enabled then
+        io.stderr:write("online popup must not prefer the Setup Guide over the live URL\n")
+        os.exit(1)
+    end
+
+    local publicBindModel = AI_PLAYERS.BuildCompanionPopupModel(
+        AI_PLAYERS.CompanionState.CONNECTED,
+        "http://0.0.0.0:8765/mcp"
+    )
+    if publicBindModel.copy_enabled or publicBindModel.mcp_url ~= nil then
+        io.stderr:write("popup must never expose 0.0.0.0 as a client MCP URL\n")
         os.exit(1)
     end
 end

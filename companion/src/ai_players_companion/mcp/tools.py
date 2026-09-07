@@ -49,3 +49,12 @@ def register_management_tools(server: FastMCP, registry: AgentRegistry) -> None:
         """
         record = registry.get_agent(agent_id)
         return {"agent_id": record.agent_id, "state": record.state}
+
+
+def register_bridge_tools(server: FastMCP, bridge) -> None:
+    """Register bridge-backed MVP tools that require a live GMod transport."""
+
+    @server.tool(name="observe")
+    async def observe(agent_id: str) -> dict[str, Any]:
+        """Return a filtered observe snapshot for one AI Player through the bridge."""
+        return bridge.observe(agent_id)
