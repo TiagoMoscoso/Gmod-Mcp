@@ -4,7 +4,7 @@ Decisions that must not be made silently. Each item is **Open** unless later clo
 
 Template: question, context, options, trade-offs, impact, when it must be decided.
 
-**Recently closed:** [OQ-AGT-001](#oq-agt-001-agent-orchestration-model) — MVP Model A, v2 Model C required. [ADR-007](../architecture/decisions/ADR-007-mvp-model-a-v2-model-c.md), [v2-backlog.md](../planning/v2-backlog.md).
+**Recently closed:** [OQ-MCP-003](#oq-mcp-003-mcp-transport-flavor) — Streamable HTTP confirmed by SPK-MCP-001. [OQ-AGT-001](#oq-agt-001-agent-orchestration-model) — MVP Model A, v2 Model C required. [ADR-007](../architecture/decisions/ADR-007-mvp-model-a-v2-model-c.md), [v2-backlog.md](../planning/v2-backlog.md).
 
 ---
 
@@ -233,19 +233,18 @@ Template: question, context, options, trade-offs, impact, when it must be decide
 
 ### OQ-MCP-003 — MCP transport flavor
 
-**Status:** OPEN
+**Status:** CLOSED
 
 **Question:** stdio vs Streamable HTTP vs SSE for the agent-facing MCP?
 
 **Context:** Claude Code and other clients differ in what they prefer. The example URL is HTTP.
 
-**Options:**
+**Resolution:**
 
-- Streamable HTTP at `/mcp` (**Proposed** to match the popup)
-- stdio for local-only
-- Both
+- **Streamable HTTP at `/mcp`, bound to `127.0.0.1:8765` by default.** SPK-MCP-001 confirmed the official Python MCP SDK's FastMCP hosts Streamable HTTP and a generic `ClientSession` connects and initializes over it (`companion-mcp-host` change). No fallback to stdio was needed.
+- stdio remains available in the SDK if a future change needs a non-HTTP local transport, but it is not the MVP default.
 
-**Trade-offs:** HTTP matches remote dedicated servers; stdio matches local process spawning.
+**Closed:** 2026-09-07
 
 **Impact:** Companion, Setup Guide.
 

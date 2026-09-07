@@ -1,6 +1,6 @@
 # ADR-005 — MCP hosted by the Companion, not GLua
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-09-06
 
 ## Context
@@ -30,4 +30,4 @@ The in-game popup displays the Companion's MCP URL (or "Companion not running").
 
 ## Follow-up
 
-This ADR can be accepted after the Companion hosting spike. It should be rejected only if a native-in-GMod MCP server proves simpler for MVP — unlikely.
+Accepted after SPK-MCP-001 confirmed Streamable HTTP on the official Python MCP SDK's FastMCP (`companion-mcp-host` change). See [OQ-MCP-003](../../requirements/open-questions.md#oq-mcp-003-mcp-transport-flavor).

@@ -1,6 +1,6 @@
 # Companion
 
-**Status:** Existence of an out-of-process Companion that hosts MCP is **Proposed**. Language and libraries are **candidates**.
+**Status:** Existence of an out-of-process Companion that hosts MCP is **Accepted** (`ADR-005`). MCP transport is **Accepted**: Streamable HTTP via the official Python MCP SDK's FastMCP, confirmed by `SPK-MCP-001` in the `companion-mcp-host` change (see [OQ-MCP-003](../requirements/open-questions.md#oq-mcp-003-mcp-transport-flavor), now closed). Remaining stack rows below are still **candidates**.
 
 ## Why a Companion exists
 
@@ -14,7 +14,7 @@ The Companion is the process the MCP client speaks to, and the process GMod brid
 | --- | --- | --- |
 | Language | Python 3.12 | Familiar, MCP SDK exists |
 | HTTP | FastAPI | Only if MCP is HTTP |
-| MCP | Official Python SDK / FastMCP | Spike required |
+| MCP | Official Python SDK / FastMCP (`mcp>=1.29,<2`) | **Accepted.** Streamable HTTP at `/mcp`, bound to `127.0.0.1:8765` by default; confirmed by `SPK-MCP-001` |
 | Async | asyncio | Fits streaming HTTP |
 | Memory DB | SQLite | **Future** |
 | STT | whisper.cpp | **Future**, local bias |
@@ -26,7 +26,7 @@ Alternatives (Go, TypeScript, .NET) are valid if a spike shows a better MCP host
 
 ### MVP
 
-- Host MCP (**Proposed:** Streamable HTTP at `/mcp`)
+- Host MCP (**Accepted:** Streamable HTTP at `/mcp`)
 - Session awareness (a client is connected or not)
 - Translate tool calls → bridge actions
 - Translate GMod events → `get_recent_events` / tool results
