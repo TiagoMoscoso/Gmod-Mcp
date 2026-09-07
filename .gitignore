@@ -15,6 +15,9 @@ build/
 *.gma.temp
 workshop.vdf
 
+# Parallel OpenSpec apply (linked worktrees)
+.worktrees/
+
 # OS junk
 .DS_Store
 Thumbs.db

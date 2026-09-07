@@ -25,7 +25,7 @@ Matching skills: `.claude/skills/openspec-*`. Prefer the slash command when the 
 
 - Specification-first. If the user asks to build gameplay, MCP, or layout, run the OpenSpec propose flow unless they named an existing change to **apply**.
 - Explore and propose are planning-only. Do not start coding in the same turn.
-- OpenSpec git: one change → branch `change/<name>`; one `tasks.md` item → one commit; apply complete → PR to `main`. See AGENTS.md.
+- OpenSpec git: one change → worktree `.worktrees/<name>` on branch `change/<name>`; one `tasks.md` item → one commit; apply complete → PR to `main`. See AGENTS.md.
 - Use plan mode for architecture, transport, and embodiment work (`OQ-TRN-001`, `OQ-BOT-001`, new ADRs).
 - Do not use Claude-specific APIs, Anthropic SDKs, or Claude-branded MCP tools in GLua or the Companion core. MCP stays provider-agnostic (`ADR-003`).
 

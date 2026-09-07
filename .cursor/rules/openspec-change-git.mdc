@@ -1,5 +1,5 @@
 ---
-description: OpenSpec git mapping — change is a branch, task is a commit, done means PR to main
+description: OpenSpec git mapping — change is a worktree+branch, task is a commit, done means PR to main
 alwaysApply: true
 ---
 
@@ -9,13 +9,14 @@ While working on a named OpenSpec change, do not wait for a second “please com
 
 | Unit | Git |
 | --- | --- |
-| Change `<name>` | Branch `change/<name>` — never `main` |
+| Change `<name>` | Worktree `.worktrees/<name>` on branch `change/<name>` — never `main` |
 | One `tasks.md` checkbox | One Conventional Commit (include the `- [x]`) |
 | All apply tasks done | `git push` and `gh pr create` targeting `main` |
 
-- Create or check out `change/<name>` from `main` before propose, update, apply, or archive.
-- Reuse the existing branch for that change. Stop if unrelated files are dirty.
-- Do not batch tasks. Do not merge the PR unless asked.
+- Add or reuse that worktree before propose, update, apply, or archive. Keep the primary checkout on `main`.
+- After creating or selecting the worktree, call `move_agent_to_root` on its absolute path before any edits.
+- Reuse the existing worktree/branch for that change. Stop if the hub tree has unrelated dirty files.
+- Do not batch tasks. Do not merge the PR unless asked. Do not `git worktree remove` unless asked.
 - Propose/update: one commit when that planning pass is complete. Archive: one commit, then push to update the PR.
 - Typo/comment work that skips OpenSpec still needs an explicit commit request.
 

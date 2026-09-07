@@ -24,7 +24,7 @@ From [mvp.md](mvp.md), on `gm_construct` (listen server if embodiment requires i
 
 OpenSpec changes live under `openspec/changes/`. Apply with `/opsx-apply` (one change at a time). Each change already has `proposal.md`, `specs/`, `design.md`, and `tasks.md`.
 
-Git: one change → branch `change/<name>`; one `tasks.md` item → one commit; when that change’s tasks are done → pull request to `main` (see `AGENTS.md`).
+Git: one change → worktree `.worktrees/<name>` on branch `change/<name>`; one `tasks.md` item → one commit; when that change’s tasks are done → pull request to `main` (see `AGENTS.md`). Parallel apply uses one worktree per change.
 
 | # | Change | Specs | Closes |
 | --- | --- | --- | --- |
@@ -84,7 +84,7 @@ Solid arrows are hard dependencies (later change needs earlier artifacts in tree
 | companion-mcp-host | 1 | 4 (MCP side) |
 | gmod-addon-skeleton | 1 | 4 (GLua side) |
 
-They do not wait on each other. Two people can split here; one person should still finish both before the bridge.
+They do not wait on each other. Two agents can apply in parallel, each in `.worktrees/<name>`. One person should still finish both before the bridge.
 
 **Gate inside 2:** [SPK-MCP-001](technical-spikes.md) (Streamable HTTP vs stdio). If Python MCP SDK fails, stop and change Companion language **before** writing lots of tools.
 
@@ -170,7 +170,7 @@ Do not start the next change's apply until the current change's tasks (including
 | 6 tools + contract tests | 6 GLua snapshot + chat hooks |
 |  | 7 movement **then** 8 combat, or split 7/8 after dispatcher interface is written |
 
-Do not parallelize 4. Do not parallelize 5 with 4.
+Do not parallelize 4. Do not parallelize 5 with 4. Parallel agents never share a checkout; each change has its own `.worktrees/<name>`.
 
 ## Spike gates (what they unlock)
 
@@ -210,6 +210,6 @@ Those belong to [milestones.md](milestones.md) M2+ and [v2-backlog.md](v2-backlo
 ## How to use this file
 
 1. Read [mvp.md](mvp.md) once.
-2. Apply change 1 on branch `change/<name>` (one commit per `tasks.md` item). When that change’s tasks are done, open a PR to `main`.
+2. Apply change 1 in worktree `.worktrees/<name>` (one commit per `tasks.md` item). When that change’s tasks are done, open a PR to `main`.
 3. After each change, run that change's Scenario/spike verification before opening the next `/opsx-apply`.
 4. When 7 is green, Scenario A is the product hypothesis test. When 8 is green, the MVP slice is complete.

@@ -65,18 +65,24 @@ Standing authorization while working on a named OpenSpec change (do not wait for
 
 | Unit | Git |
 | --- | --- |
-| One OpenSpec change | One branch `change/<name>` — never `main` |
+| One OpenSpec change | One branch `change/<name>` in worktree `.worktrees/<name>` — never `main` |
 | One `tasks.md` checkbox | One Conventional Commit |
 | All apply tasks done | Push and open a pull request to `main` |
 
-### Branch
+### Isolation (worktree)
+
+Parallel agents must not share a checkout. The primary tree stays on `main` as a hub. Each change runs in its own linked worktree.
 
 Before propose, update, apply, or archive on change `<name>`:
 
-1. If HEAD is not `change/<name>`, create it from up-to-date `main` or check out the existing local/remote branch.
-2. Reuse `change/<name>` if it already exists. Do not invent a second branch for the same change.
-3. Stop if the working tree has **unrelated** dirty files. Uncommitted work that belongs to this change may come along onto the new branch.
-4. Never implement, propose, or archive a change on `main`.
+1. Run `git worktree list`. If a worktree already has `change/<name>`, reuse it.
+2. Otherwise add `.worktrees/<name>` from an up-to-date `main` (fetch first when the hub tree is clean):
+   - Existing branch: `git worktree add ".worktrees/<name>" "change/<name>"`
+   - New branch: `git worktree add -b "change/<name>" ".worktrees/<name>" main`
+3. If git refuses because the branch is checked out in the primary tree: switch the primary to `main` only when that tree is clean, then retry. If the primary tree is dirty with **unrelated** files, stop.
+4. Move the agent workspace to that worktree **before any edits**. In Cursor, call `move_agent_to_root` with the absolute worktree path. Elsewhere, use that directory as cwd for every command.
+5. Do not edit the primary checkout for this change. Do not invent a second branch or a second worktree for the same change. Do not `git worktree remove` unless the user asks.
+6. Never implement, propose, or archive a change on `main` or in the primary checkout.
 
 ### Commits (apply)
 
@@ -84,17 +90,17 @@ After each task: implement, verify, mark `- [x]`, then commit **only** that task
 
 Do not batch multiple tasks into one commit. Do not `--no-verify`, `--amend` unless the commit rules allow it, or force-push.
 
-Propose/update: stay on `change/<name>` and make **one** Conventional Commit when the planning artifacts for that invocation are complete. Do not open a PR until apply is finished unless the user only asked for planning review.
+Propose/update: stay in `.worktrees/<name>` and make **one** Conventional Commit when the planning artifacts for that invocation are complete. Do not open a PR until apply is finished unless the user only asked for planning review.
 
-Archive: stay on `change/<name>`. One Conventional Commit after specs merge; push so the PR updates.
+Archive: stay in `.worktrees/<name>`. One Conventional Commit after specs merge; push so the PR updates.
 
 ### Pull request
 
 When apply reaches all tasks complete:
 
-1. `git push -u origin HEAD` if the branch is not on origin.
+1. From `.worktrees/<name>`, `git push -u origin HEAD` if the branch is not on origin.
 2. Open a PR targeting `main` with `gh pr create` if none exists for this branch. Return the URL.
-3. Suggest archive on the same branch (another commit on the PR). Do not merge unless the user asks.
+3. Suggest archive in the same worktree (another commit on the PR). Do not merge unless the user asks.
 
 Typo/comment fixes that skip OpenSpec still need an explicit commit request. Do not commit secrets.
 
@@ -141,7 +147,7 @@ Engine facts: vanilla GLua cannot host MCP HTTP; GMod may block private-IP HTTP 
 - Comments explain **why**, invariants, and engine constraints — not the next line. Public modules and MCP tools get brief docs (purpose, params, errors, phase).
 - Tests prove spec behavior. Companion tests must run **without** Garry's Mod.
 - Fail closed on protocol mismatch, missing Companion, or denied capability.
-- Conventional Commits in English: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`. OpenSpec apply is standing authorization for one commit per task and a PR to `main` (see **Git for OpenSpec changes**). Other work still waits for an explicit commit request.
+- Conventional Commits in English: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`. OpenSpec apply is standing authorization for one worktree per change, one commit per task, and a PR to `main` (see **Git for OpenSpec changes**). Other work still waits for an explicit commit request.
 
 ## Commands (when the trees exist)
 

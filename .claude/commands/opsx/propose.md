@@ -51,7 +51,7 @@ When the user is ready to implement, they must start the apply workflow explicit
 
 3. **Create the change directory**
 
-   **Git (required):** Follow `AGENTS.md` "Git for OpenSpec changes". Check out or create branch `change/<name>` from `main` before writing artifacts. Never propose on `main`.
+   **Git (required):** Follow `AGENTS.md` "Git for OpenSpec changes". Isolate this change in git worktree `.worktrees/<name>` on branch `change/<name>` before writing artifacts. Reuse that worktree if it exists. Never propose in the primary checkout or on `main`. After adding or selecting the worktree, move the agent root there (Cursor: `move_agent_to_root`) before any edits.
 
    Choose one schema form below. If a registered store is selected, append `--store "<store-id>"` to that command and each later OpenSpec command shown below that accepts `--store`.
 
@@ -129,7 +129,7 @@ After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions, plus any conditional artifact you skipped and why
 - What's ready: "All artifacts needed for implementation are ready."
-- Commit the planning artifacts as **one** Conventional Commit on `change/<name>`. Do not open a PR until apply is finished unless the user only asked for planning review.
+- Commit the planning artifacts as **one** Conventional Commit in `.worktrees/<name>` on `change/<name>`. Do not open a PR until apply is finished unless the user only asked for planning review.
 - Prompt: "The artifacts are ready for review. When you are ready, run `/opsx:apply`."
 
 **Artifact Creation Guidelines**
@@ -145,7 +145,7 @@ After completing all artifacts, summarize:
 
 **Guardrails**
 - The request that invoked this workflow authorizes planning only. Any implementation or apply instruction in that request does not carry forward. Do NOT implement the change, start the apply workflow, or edit project code during this workflow. After presenting the artifacts, stop and wait for a new user request to start the apply workflow
-- Work on branch `change/<name>` only. Commit the planning artifacts when this pass is complete. Do not open a PR until apply is finished unless the user only asked for planning review
+- Work only in worktree `.worktrees/<name>` on branch `change/<name>`. Commit the planning artifacts when this pass is complete. Do not open a PR until apply is finished unless the user only asked for planning review
 - Create every artifact the apply phase transitively depends on, not just the ids listed in `apply.requires`
 - Always read dependency artifacts before creating a new one - re-read from disk, not from conversation memory (files may have changed since you last saw them)
 - Ask about ambiguities that would materially change scope, externally observable behavior, compatibility, or acceptance criteria; for minor details, make reasonable assumptions and record them
