@@ -1,8 +1,12 @@
--- Protocol version this addon speaks. Must match
--- companion/src/ai_players_companion/protocol.py until the bridge handshake
--- change replaces the duplicated constant with a real negotiation.
+-- Protocol version this addon speaks.
 if SERVER then
     AddCSLuaFile()
 end
 
 AI_PLAYERS_PROTOCOL_VERSION = "1"
+
+AI_PLAYERS_BRIDGE_MESSAGE = {
+    HELLO = "hello",
+    HELLO_OK = "hello_ok",
+    HELLO_REJECT = "hello_reject",
+}

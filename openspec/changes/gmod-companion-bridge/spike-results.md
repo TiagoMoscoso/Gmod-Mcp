@@ -39,3 +39,19 @@ Relevant report excerpt:
   }
 }
 ```
+
+## Task 1.3 Live Bridge Verification
+
+Date: 2026-09-07
+
+Setup:
+
+- The repo addon Lua files were copied into the local GMod `garrysmod/lua` tree for the running Proton session because GMod did not follow Unix symlinks.
+- The real Companion was started with `ai-players-companion --gmod-data <GarrysMod>/garrysmod/data`.
+- The GMod console ran `lua_openscript autorun/server/sv_ai_players_init.lua`.
+
+Result:
+
+- GMod wrote `garrysmod/data/ai_players/bridge/gmod_out/hello.json`.
+- Companion wrote `garrysmod/data/ai_players/bridge/companion_out/hello_ok.json`.
+- Companion wrote `garrysmod/data/ai_players/bridge/companion_out/status.json` with `ready = true` and `state = "healthy"`.
