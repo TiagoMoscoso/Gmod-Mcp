@@ -51,7 +51,7 @@ MCP client  --MCP-->  Companion  --bridge-->  GMod (GLua [+ future native])
 
 **Proposed:** Companion hosts the HTTP MCP URL shown in the popup. GMod does not listen for MCP. See [ADR-005](decisions/ADR-005-mcp-hosted-by-companion.md).
 
-**Open:** the bridge protocol ([OQ-TRN-001](../requirements/open-questions.md#oq-trn-001-gmod-companion-transport)).
+**Accepted for MVP:** the bridge uses file IPC under `garrysmod/data/ai_players/bridge/`, confirmed by `SPK-TRN-001` ([OQ-TRN-001](../requirements/open-questions.md#oq-trn-001-gmod-companion-transport)).
 
 ## Cognition vs motor control
 
