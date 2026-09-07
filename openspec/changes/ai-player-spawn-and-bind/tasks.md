@@ -21,4 +21,4 @@
 
 ## 4. Docs for operators
 
-- [ ] 4.1 Document listen-server / player-slot requirements (if player-bot embodiment won) in `addon/README.md` and verify a Sandbox user is told not to use true singleplayer when that is required
+- [x] 4.1 Document listen-server / player-slot requirements (if player-bot embodiment won) in `addon/README.md` and verify a Sandbox user is told not to use true singleplayer when that is required
