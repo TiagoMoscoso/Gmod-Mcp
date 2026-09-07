@@ -53,4 +53,17 @@ if companionHost ~= "127.0.0.1" then
     os.exit(1)
 end
 
+-- spec: Sandbox adapter boundary — server init must select the Sandbox
+-- adapter implementation.
+if realm == "server" then
+    local adapterName = AI_PLAYERS.Adapter and AI_PLAYERS.Adapter.Name
+    if adapterName ~= "sandbox" then
+        io.stderr:write(string.format(
+            "server init must select the sandbox GameAdapter, got %s\n",
+            tostring(adapterName)
+        ))
+        os.exit(1)
+    end
+end
+
 print("ok: " .. realm .. " boot")
