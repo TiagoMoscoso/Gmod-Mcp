@@ -1,1 +1,1 @@
-"""AI Players Companion: out-of-process MCP host skeleton (not yet hosting MCP)."""
+"""AI Players Companion: out-of-process MCP host for GMod AI Players."""

@@ -5,9 +5,19 @@ build-backend = "hatchling.build"
 [project]
 name = "ai-players-companion"
 version = "0.1.0"
-description = "Out-of-process host skeleton for GMod AI Players. Does not host MCP yet."
+description = "Out-of-process MCP host for GMod AI Players."
 readme = "README.md"
 requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.29,<2",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+]
 
 [project.scripts]
 ai-players-companion = "ai_players_companion.__main__:main"
