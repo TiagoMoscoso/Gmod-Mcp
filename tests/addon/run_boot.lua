@@ -310,11 +310,12 @@ if realm == "server" then
         os.exit(1)
     end
 
-    -- spec: "Removal drops the agent" — forgetting one must not touch the
-    -- other (multi-agent data model, not a shared slot).
-    AI_PLAYERS.Registry:Forget(botB)
+    -- spec: addon/spawn-lifecycle "Removal drops the agent" (3.5), via the
+    -- same PlayerDisconnected hook a Kick fires for a promoted player bot.
+    -- Also proves forgetting one agent does not touch a distinct one.
+    hook.Run("PlayerDisconnected", botB)
     if AI_PLAYERS.Registry:GetByAgentId(shepherd.agentId) ~= nil then
-        io.stderr:write("Forget must drop the targeted agent\n")
+        io.stderr:write("PlayerDisconnected must forget the agent it belongs to\n")
         os.exit(1)
     end
     if AI_PLAYERS.Registry:GetByAgentId(walter.agentId) == nil then

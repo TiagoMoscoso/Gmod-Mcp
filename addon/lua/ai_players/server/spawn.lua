@@ -52,3 +52,12 @@ function AI_PLAYERS.Bind(_ply, placeholderEntity, name, context)
 
     return record
 end
+
+-- Removal drops the agent (spec addon/spawn-lifecycle: "Removal drops the
+-- agent"). Promoted player bots are removed with Kick, never
+-- Entity:Remove (docs/architecture/gmod-runtime.md "Embodiment"); Kick
+-- triggers a normal disconnect, so this is the one place that forgets a
+-- bound agent regardless of who kicked it.
+hook.Add("PlayerDisconnected", "AIPlayersForgetOnDisconnect", function(ply)
+    AI_PLAYERS.Registry:Forget(ply)
+end)

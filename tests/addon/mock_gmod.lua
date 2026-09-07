@@ -144,6 +144,37 @@ function M.install(luaRoot, realm)
     function net.Broadcast() end
     function net.Receive(_name, _callback) end
 
+    -- Real enough to exercise PlayerDisconnected -> Registry:Forget wiring
+    -- (ai-player-spawn-and-bind) without a full GMod hook system.
+    hook = {}
+    local hooks = {}
+
+    function hook.Add(event, identifier, fn)
+        hooks[event] = hooks[event] or {}
+        hooks[event][identifier] = fn
+    end
+
+    function hook.Remove(event, identifier)
+        if hooks[event] then
+            hooks[event][identifier] = nil
+        end
+    end
+
+    function hook.Run(event, ...)
+        if not hooks[event] then
+            return nil
+        end
+        for _, fn in pairs(hooks[event]) do
+            local result = fn(...)
+            if result ~= nil then
+                return result
+            end
+        end
+        return nil
+    end
+
+    hook.Call = hook.Run
+
     function IsValid(value)
         return value ~= nil and value.IsValid == true
     end

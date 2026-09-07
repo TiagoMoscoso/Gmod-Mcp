@@ -17,7 +17,7 @@
 - [x] 3.2 Reject bind when name or context is empty and verify no `agent_id` is created
 - [x] 3.3 On successful bind, upsert the registry over the bridge and verify Companion `list_agents` and `get_agent` return Walter's name and context
 - [x] 3.4 Grant hardcoded capabilities `observe`, `move`, `chat`, `combat` at bind and verify `get_agent` lists them
-- [ ] 3.5 On entity remove/Kick, delete the registry row and verify `list_agents` drops that `agent_id`
+- [x] 3.5 On entity remove/Kick, delete the registry row and verify `list_agents` drops that `agent_id`
 
 ## 4. Docs for operators
 
