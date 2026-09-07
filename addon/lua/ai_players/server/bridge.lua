@@ -20,6 +20,11 @@ Bridge.ObserveRequestPath = Bridge.CompanionOut .. "/observe_request.json"
 Bridge.ObserveResultPath = Bridge.GmodOut .. "/observe_result.json"
 Bridge.StatusTimeoutSeconds = 2
 Bridge.McpUrl = nil
+-- Whether an MCP client session is currently connected to the Companion
+-- (not just whether the file IPC bridge itself is healthy). Drives the
+-- WAITING_FOR_AGENT -> ACTIVE transition (design.md Decisions: "ACTIVE
+-- policy").
+Bridge.McpSessionConnected = false
 
 util.AddNetworkString("AIPlayersCompanionStatus")
 
@@ -51,6 +56,7 @@ end
 function Bridge.ApplyStatusMessage(message, currentTime)
     if not message or message.protocol_version ~= AI_PLAYERS_PROTOCOL_VERSION then
         AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+        Bridge.McpSessionConnected = false
         return false
     end
 
@@ -58,20 +64,24 @@ function Bridge.ApplyStatusMessage(message, currentTime)
     local updatedAt = tonumber(payload.updated_at)
     if updatedAt and currentTime - updatedAt > Bridge.StatusTimeoutSeconds then
         AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+        Bridge.McpSessionConnected = false
         return false
     end
 
     if payload.ready == true and payload.state == "healthy" then
         AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.CONNECTED
+        Bridge.McpSessionConnected = payload.mcp_session_connected == true
         return true
     end
 
     if payload.state == "protocol_mismatch" or payload.state == "invalid_hello" then
         AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.ERROR
+        Bridge.McpSessionConnected = false
         return false
     end
 
     AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+    Bridge.McpSessionConnected = false
     return false
 end
 
@@ -141,6 +151,9 @@ function Bridge.Start()
 
     timer.Create("AIPlayersBridgeStatusPoll", 1, 0, function()
         Bridge.PollStatus()
+        if AI_PLAYERS.Registry then
+            AI_PLAYERS.Registry:ReconcileLifecycle()
+        end
     end)
 end
 

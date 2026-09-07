@@ -116,6 +116,217 @@ if realm == "server" then
         io.stderr:write("handshake rejection must become error\n")
         os.exit(1)
     end
+
+    -- spec: addon/spawn-lifecycle "Stable agent_id after bind" / "Inactive
+    -- unknown to MCP" (task 2.2). A plain table stands in for an Entity:
+    -- Registry never calls entity methods, only uses it as a lookup key.
+    local placeholder = { debugName = "placeholder" }
+    AI_PLAYERS.Registry:TrackInactive(placeholder)
+
+    if not AI_PLAYERS.Registry:IsBindable(placeholder) then
+        io.stderr:write("a freshly spawned placeholder must be bindable\n")
+        os.exit(1)
+    end
+
+    if next(AI_PLAYERS.Registry.byAgentId) ~= nil then
+        io.stderr:write("an unbound spawn must not appear in the agent_id registry (list_agents equivalent)\n")
+        os.exit(1)
+    end
+
+    -- spec: addon/toolgun-bind "Bind requires name and context" (3.2).
+    -- AI_PLAYERS.Bind delegates this exact check to Registry:Promote
+    -- (addon/lua/ai_players/server/spawn.lua); exercised here directly
+    -- since Bind itself needs a real player.CreateNextBot slot.
+    local rejectedEmptyName, emptyNameReason = AI_PLAYERS.Registry:Promote(placeholder, {}, "", "context")
+    local rejectedEmptyContext, emptyContextReason = AI_PLAYERS.Registry:Promote(placeholder, {}, "Walter", "")
+    if rejectedEmptyName ~= nil or emptyNameReason ~= "invalid_bind"
+        or rejectedEmptyContext ~= nil or emptyContextReason ~= "invalid_bind" then
+        io.stderr:write("bind with an empty name or context must be rejected as invalid_bind\n")
+        os.exit(1)
+    end
+    if next(AI_PLAYERS.Registry.byAgentId) ~= nil then
+        io.stderr:write("a rejected bind must not create an agent_id\n")
+        os.exit(1)
+    end
+    if not AI_PLAYERS.Registry:IsBindable(placeholder) then
+        io.stderr:write("a rejected bind must leave the placeholder bindable\n")
+        os.exit(1)
+    end
+
+    local bot = { debugName = "bot" }
+    local walter = AI_PLAYERS.Registry:Promote(
+        placeholder,
+        bot,
+        "Walter",
+        "You are Walter, my mechanic friend.",
+        AI_PLAYERS.MVP_CAPABILITIES
+    )
+    if not walter or walter.agentId == nil or walter.name ~= "Walter"
+        or walter.context ~= "You are Walter, my mechanic friend."
+        or walter.state ~= AI_PLAYERS.State.WAITING_FOR_AGENT then
+        io.stderr:write("a valid bind must record agent_id, name, context, and state\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByEntity(placeholder) ~= nil then
+        io.stderr:write("promotion must move the record off the old placeholder key\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByEntity(bot) ~= walter then
+        io.stderr:write("promotion must track the record under the new entity handle\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId) ~= walter then
+        io.stderr:write("a bound agent must be resolvable by agent_id\n")
+        os.exit(1)
+    end
+
+    -- spec: addon/toolgun-bind "MVP capabilities are granted at bind" (3.4).
+    if #walter.capabilities ~= 4
+        or not table.concat(walter.capabilities, ","):find("observe", 1, true)
+        or not table.concat(walter.capabilities, ","):find("move", 1, true)
+        or not table.concat(walter.capabilities, ","):find("chat", 1, true)
+        or not table.concat(walter.capabilities, ","):find("combat", 1, true) then
+        io.stderr:write("a bind must grant exactly the hardcoded MVP capabilities\n")
+        os.exit(1)
+    end
+
+    -- The registry pushes bound records over the bridge so Companion
+    -- list_agents/get_agent reflect them (proven end to end against the
+    -- same file shape by tests/companion/test_file_ipc_registry.py).
+    local upsertRaw = file.Read(AI_PLAYERS.Bridge.RegistryUpsertPath, "DATA")
+    if not upsertRaw or not string.find(upsertRaw, walter.agentId, 1, true)
+        or not string.find(upsertRaw, "Walter", 1, true)
+        or not string.find(upsertRaw, "combat", 1, true) then
+        io.stderr:write("bind must upsert agent_id, name, and MVP capabilities over the bridge\n")
+        os.exit(1)
+    end
+
+    -- spec: addon/spawn-lifecycle "Bind moves to waiting" / "Companion loss
+    -- disconnects" (task 2.3). A healthy bridge with no MCP client attached
+    -- is still a session drop (npc-lifecycle.md: "ACTIVE / PAUSED ->
+    -- DISCONNECTED | Bridge or session drop"), not a silent "stay ACTIVE".
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = false
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.WAITING_FOR_AGENT then
+        io.stderr:write("reconcile must leave WAITING_FOR_AGENT alone while no client is connected\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.CONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = true
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.ACTIVE then
+        io.stderr:write("reconcile must move WAITING_FOR_AGENT to ACTIVE once bridge and client are healthy\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.CONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = false
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.DISCONNECTED then
+        io.stderr:write("reconcile must disconnect ACTIVE when no MCP client is attached, even if the bridge is healthy\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = false
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.DISCONNECTED then
+        io.stderr:write("reconcile must keep DISCONNECTED while the bridge stays unhealthy\n")
+        os.exit(1)
+    end
+
+    AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.CONNECTED
+    AI_PLAYERS.Bridge.McpSessionConnected = true
+    AI_PLAYERS.Registry:ReconcileLifecycle()
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId).state ~= AI_PLAYERS.State.ACTIVE then
+        io.stderr:write("reconcile must restore DISCONNECTED to ACTIVE once the bridge and client are both back\n")
+        os.exit(1)
+    end
+
+    -- get_agent_status reflects state via the same bridge upsert file
+    -- (proven end to end by tests/companion/test_get_agent_tools.py).
+    local activeUpsertRaw = file.Read(AI_PLAYERS.Bridge.RegistryUpsertPath, "DATA")
+    if not activeUpsertRaw or not string.find(activeUpsertRaw, "ACTIVE", 1, true) then
+        io.stderr:write("the final state transition must be pushed over the bridge\n")
+        os.exit(1)
+    end
+
+    -- spec: addon/spawn-lifecycle "Lifecycle gates actions" / "Disconnected
+    -- NPC is not a silent attacker" (task 2.4). No movement/combat
+    -- controller exists yet (design.md Non-Goals); this gate is what they
+    -- will call instead of re-deriving the halt rule.
+    for _, blockedState in ipairs({
+        AI_PLAYERS.State.INACTIVE,
+        AI_PLAYERS.State.WAITING_FOR_AGENT,
+        AI_PLAYERS.State.PAUSED,
+        AI_PLAYERS.State.ERROR,
+        AI_PLAYERS.State.DISCONNECTED,
+    }) do
+        AI_PLAYERS.Registry:SetState(walter.agentId, blockedState)
+        local canAct, reason = AI_PLAYERS.Registry:CanAct(walter.agentId, "move")
+        if canAct or reason ~= "not_active" then
+            io.stderr:write(string.format("%s must not be allowed to act\n", blockedState))
+            os.exit(1)
+        end
+    end
+
+    AI_PLAYERS.Registry:SetState(walter.agentId, AI_PLAYERS.State.ACTIVE)
+    if not AI_PLAYERS.Registry:CanAct(walter.agentId, "combat") then
+        io.stderr:write("ACTIVE with a granted capability must be allowed to act\n")
+        os.exit(1)
+    end
+    local canActUngranted, ungrantedReason = AI_PLAYERS.Registry:CanAct(walter.agentId, "fly")
+    if canActUngranted or ungrantedReason ~= "missing_capability" then
+        io.stderr:write("ACTIVE without a granted capability must be rejected as missing_capability\n")
+        os.exit(1)
+    end
+    local canActUnknown, unknownReason = AI_PLAYERS.Registry:CanAct("agt_does_not_exist", "move")
+    if canActUnknown or unknownReason ~= "unknown_agent" then
+        io.stderr:write("an unknown agent_id must be rejected as unknown_agent\n")
+        os.exit(1)
+    end
+
+    -- spec: addon/spawn-lifecycle "Two bound NPCs have distinct ids" (2.5).
+    local placeholderB = { debugName = "placeholderB" }
+    AI_PLAYERS.Registry:TrackInactive(placeholderB)
+    local botB = { debugName = "botB" }
+    local shepherd = AI_PLAYERS.Registry:Promote(
+        placeholderB,
+        botB,
+        "Shepherd",
+        "You are Shepherd, a guard dog.",
+        AI_PLAYERS.MVP_CAPABILITIES
+    )
+    if not shepherd or shepherd.agentId == nil or shepherd.agentId == walter.agentId
+        or shepherd.name == walter.name then
+        io.stderr:write("a second bind must get a distinct agent_id and name\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId) == nil
+        or AI_PLAYERS.Registry:GetByAgentId(shepherd.agentId) == nil then
+        io.stderr:write("both bound agents must be simultaneously resolvable by agent_id (list_agents equivalent)\n")
+        os.exit(1)
+    end
+
+    -- spec: addon/spawn-lifecycle "Removal drops the agent" (3.5), via the
+    -- same PlayerDisconnected hook a Kick fires for a promoted player bot.
+    -- Also proves forgetting one agent does not touch a distinct one.
+    hook.Run("PlayerDisconnected", botB)
+    if AI_PLAYERS.Registry:GetByAgentId(shepherd.agentId) ~= nil then
+        io.stderr:write("PlayerDisconnected must forget the agent it belongs to\n")
+        os.exit(1)
+    end
+    if AI_PLAYERS.Registry:GetByAgentId(walter.agentId) == nil then
+        io.stderr:write("forgetting one agent must not affect a distinct agent\n")
+        os.exit(1)
+    end
+    local removeRaw = file.Read(AI_PLAYERS.Bridge.RegistryRemovePath, "DATA")
+    if not removeRaw or not string.find(removeRaw, shepherd.agentId, 1, true) then
+        io.stderr:write("forgetting a bound agent must remove it over the bridge\n")
+        os.exit(1)
+    end
 end
 
 -- spec: No false MCP-ready UX — the client must default to disconnected.
@@ -157,6 +368,13 @@ if realm == "client" then
     )
     if publicBindModel.copy_enabled or publicBindModel.mcp_url ~= nil then
         io.stderr:write("popup must never expose 0.0.0.0 as a client MCP URL\n")
+        os.exit(1)
+    end
+
+    -- spec: addon/spawn-lifecycle "Inactive spawn from Spawn Menu" (2.1).
+    local npcEntry = list.Get("NPC")["ai_players_npc"]
+    if not npcEntry or npcEntry.Class ~= "ai_players_npc" or npcEntry.Category ~= "AI Players" then
+        io.stderr:write("Spawn Menu must list ai_players_npc under the AI Players category\n")
         os.exit(1)
     end
 end
