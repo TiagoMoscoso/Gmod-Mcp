@@ -1,7 +1,7 @@
 ## 1. Module graph
 
 - [x] 1.1 Create `lua/ai_players/{shared,server,client,integrations}` and wire `lua/autorun` includes for each realm and verify a Sandbox listen server loads with no Lua error
-- [ ] 1.2 Add shared convars `ai_players_companion_host/port/path` defaulting to `127.0.0.1`, `8765`, `/mcp` and verify `ai_players_companion_host` default is not a public bind address
+- [x] 1.2 Add shared convars `ai_players_companion_host/port/path` defaulting to `127.0.0.1`, `8765`, `/mcp` and verify `ai_players_companion_host` default is not a public bind address
 
 ## 2. Gamemode adapter stub
 
