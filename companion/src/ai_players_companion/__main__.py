@@ -4,6 +4,7 @@ import argparse
 import os
 from pathlib import Path
 
+from .agents.registry import AgentRegistry
 from .mcp.server import build_server
 from .protocol import PROTOCOL_VERSION
 from .transport.file_ipc import BridgePaths, FileIpcBridge
@@ -18,12 +19,13 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    registry = AgentRegistry()
     bridge = None
     if args.gmod_data:
-        bridge = FileIpcBridge(BridgePaths.from_gmod_data(Path(args.gmod_data)))
+        bridge = FileIpcBridge(BridgePaths.from_gmod_data(Path(args.gmod_data)), registry=registry)
         bridge.start()
 
-    app = build_server()
+    app = build_server(registry)
     print(
         f"ai-players-companion (protocol {PROTOCOL_VERSION}): "
         f"serving MCP at http://{app.settings.host}:{app.settings.port}{app.settings.streamable_http_path}"

@@ -10,6 +10,8 @@ Bridge.CompanionOut = Bridge.Root .. "/companion_out"
 Bridge.HelloPath = Bridge.GmodOut .. "/hello.json"
 Bridge.HelloOkPath = Bridge.CompanionOut .. "/hello_ok.json"
 Bridge.HelloRejectPath = Bridge.CompanionOut .. "/hello_reject.json"
+Bridge.RegistryUpsertPath = Bridge.GmodOut .. "/registry_upsert.json"
+Bridge.RegistryRemovePath = Bridge.GmodOut .. "/registry_remove.json"
 
 local function ensureDir(path)
     if not file.Exists(path, "DATA") then
@@ -63,6 +65,24 @@ function Bridge.Start()
             timer.Remove("AIPlayersBridgeHelloPoll")
         end
     end)
+end
+
+function Bridge.UpsertAgent(record)
+    writeJson(Bridge.RegistryUpsertPath, AI_PLAYERS_BridgeEnvelope(
+        AI_PLAYERS_BRIDGE_MESSAGE.REGISTRY_UPSERT,
+        {
+            agent = record,
+        }
+    ))
+end
+
+function Bridge.RemoveAgent(agentId)
+    writeJson(Bridge.RegistryRemovePath, AI_PLAYERS_BridgeEnvelope(
+        AI_PLAYERS_BRIDGE_MESSAGE.REGISTRY_REMOVE,
+        {
+            agent_id = agentId,
+        }
+    ))
 end
 
 AI_PLAYERS.Bridge = Bridge

@@ -14,12 +14,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from ai_players_companion.agents.registry import AgentRecord, AgentRegistry
 from ai_players_companion.protocol import (
     PROTOCOL_VERSION,
     TYPE_BRIDGE_STATUS,
     TYPE_HELLO,
     TYPE_HELLO_OK,
     TYPE_HELLO_REJECT,
+    TYPE_REGISTRY_REMOVE,
+    TYPE_REGISTRY_UPSERT,
     envelope,
 )
 
@@ -60,6 +63,14 @@ class BridgePaths:
     def status_path(self) -> Path:
         return self.companion_out / "status.json"
 
+    @property
+    def registry_upsert_path(self) -> Path:
+        return self.gmod_out / "registry_upsert.json"
+
+    @property
+    def registry_remove_path(self) -> Path:
+        return self.gmod_out / "registry_remove.json"
+
     def ensure(self) -> None:
         self.gmod_out.mkdir(parents=True, exist_ok=True)
         self.companion_out.mkdir(parents=True, exist_ok=True)
@@ -85,12 +96,21 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 class FileIpcBridge:
     """Polls GMod bridge files and answers the MVP hello handshake."""
 
-    def __init__(self, paths: BridgePaths, *, poll_interval: float = 0.25) -> None:
+    def __init__(
+        self,
+        paths: BridgePaths,
+        *,
+        registry: AgentRegistry | None = None,
+        poll_interval: float = 0.25,
+    ) -> None:
         self._paths = paths
+        self._registry = registry if registry is not None else AgentRegistry()
         self._poll_interval = poll_interval
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._last_hello_mtime_ns: int | None = None
+        self._last_registry_upsert_mtime_ns: int | None = None
+        self._last_registry_remove_mtime_ns: int | None = None
 
     @property
     def paths(self) -> BridgePaths:
@@ -115,6 +135,11 @@ class FileIpcBridge:
             self._stop.wait(self._poll_interval)
 
     def poll_once(self) -> None:
+        self._poll_hello()
+        self._poll_registry_upsert()
+        self._poll_registry_remove()
+
+    def _poll_hello(self) -> None:
         try:
             mtime_ns = self._paths.hello_path.stat().st_mtime_ns
         except FileNotFoundError:
@@ -139,6 +164,53 @@ class FileIpcBridge:
         )
         _write_json(self._paths.hello_ok_path, payload)
         self._write_status(ready=True, state="healthy")
+
+    def _poll_registry_upsert(self) -> None:
+        message = self._read_changed(
+            self._paths.registry_upsert_path,
+            "_last_registry_upsert_mtime_ns",
+        )
+        if message is None:
+            return
+        if message.get("type") != TYPE_REGISTRY_UPSERT or message.get("protocol_version") != PROTOCOL_VERSION:
+            return
+        agent = message.get("payload", {}).get("agent")
+        if not isinstance(agent, dict):
+            return
+        try:
+            record = AgentRecord(
+                agent_id=str(agent["agent_id"]),
+                name=str(agent["name"]),
+                context=str(agent["context"]),
+                capabilities=tuple(str(capability) for capability in agent["capabilities"]),
+                state=str(agent["state"]),
+            )
+        except (KeyError, TypeError):
+            return
+        self._registry.upsert(record)
+
+    def _poll_registry_remove(self) -> None:
+        message = self._read_changed(
+            self._paths.registry_remove_path,
+            "_last_registry_remove_mtime_ns",
+        )
+        if message is None:
+            return
+        if message.get("type") != TYPE_REGISTRY_REMOVE or message.get("protocol_version") != PROTOCOL_VERSION:
+            return
+        agent_id = message.get("payload", {}).get("agent_id")
+        if isinstance(agent_id, str):
+            self._registry.remove(agent_id)
+
+    def _read_changed(self, path: Path, attr_name: str) -> dict[str, Any] | None:
+        try:
+            mtime_ns = path.stat().st_mtime_ns
+        except FileNotFoundError:
+            return None
+        if mtime_ns == getattr(self, attr_name):
+            return None
+        setattr(self, attr_name, mtime_ns)
+        return _read_json(path)
 
     def _reject(self, reason: str) -> None:
         _write_json(
