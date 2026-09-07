@@ -6,8 +6,17 @@ AI_PLAYERS.CompanionMcpUrl = nil
 AI_PLAYERS.CompanionPopup = nil
 AI_PLAYERS.SetupGuideUrl = "https://github.com/TiagoMoscoso/Gmod-MCP#readme"
 
+function AI_PLAYERS.IsLoopbackMcpUrl(mcpUrl)
+    if not mcpUrl or mcpUrl == "" then
+        return false
+    end
+
+    local host = string.match(mcpUrl, "^https?://([^/:]+)")
+    return host == "127.0.0.1" or host == "localhost" or host == "[::1]"
+end
+
 function AI_PLAYERS.BuildCompanionPopupModel(status, mcpUrl)
-    local online = status == AI_PLAYERS.CompanionState.CONNECTED and mcpUrl ~= nil and mcpUrl ~= ""
+    local online = status == AI_PLAYERS.CompanionState.CONNECTED and AI_PLAYERS.IsLoopbackMcpUrl(mcpUrl)
     return {
         title = "AI Players",
         status_text = online and "MCP Server Online" or "Companion Not Ready",

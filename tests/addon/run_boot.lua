@@ -150,6 +150,15 @@ if realm == "client" then
         io.stderr:write("online popup must not prefer the Setup Guide over the live URL\n")
         os.exit(1)
     end
+
+    local publicBindModel = AI_PLAYERS.BuildCompanionPopupModel(
+        AI_PLAYERS.CompanionState.CONNECTED,
+        "http://0.0.0.0:8765/mcp"
+    )
+    if publicBindModel.copy_enabled or publicBindModel.mcp_url ~= nil then
+        io.stderr:write("popup must never expose 0.0.0.0 as a client MCP URL\n")
+        os.exit(1)
+    end
 end
 
 print("ok: " .. realm .. " boot")
