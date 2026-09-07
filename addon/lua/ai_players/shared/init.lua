@@ -4,3 +4,5 @@ if SERVER then
 end
 
 AI_PLAYERS = AI_PLAYERS or {}
+
+include("ai_players/shared/protocol.lua")
