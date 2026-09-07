@@ -4,6 +4,7 @@ AI_PLAYERS = AI_PLAYERS or {}
 AI_PLAYERS.CompanionStatus = AI_PLAYERS.CompanionState.DISCONNECTED
 AI_PLAYERS.CompanionMcpUrl = nil
 AI_PLAYERS.CompanionPopup = nil
+AI_PLAYERS.SetupGuideUrl = "https://github.com/TiagoMoscoso/Gmod-MCP#readme"
 
 function AI_PLAYERS.BuildCompanionPopupModel(status, mcpUrl)
     local online = status == AI_PLAYERS.CompanionState.CONNECTED and mcpUrl ~= nil and mcpUrl ~= ""
@@ -12,6 +13,8 @@ function AI_PLAYERS.BuildCompanionPopupModel(status, mcpUrl)
         status_text = online and "MCP Server Online" or "Companion Not Ready",
         mcp_url = online and mcpUrl or nil,
         copy_enabled = online,
+        setup_guide_url = AI_PLAYERS.SetupGuideUrl,
+        setup_guide_enabled = not online,
     }
 end
 
@@ -55,6 +58,19 @@ function AI_PLAYERS.ShowCompanionPopup()
         copyButton:SetText("Copy MCP URL")
         copyButton.DoClick = function()
             SetClipboardText(model.mcp_url)
+        end
+    else
+        local helpLabel = vgui.Create("DLabel", frame)
+        helpLabel:SetPos(16, 68)
+        helpLabel:SetSize(388, 24)
+        helpLabel:SetText("Companion required")
+
+        local setupButton = vgui.Create("DButton", frame)
+        setupButton:SetPos(16, 104)
+        setupButton:SetSize(160, 28)
+        setupButton:SetText("Setup Guide")
+        setupButton.DoClick = function()
+            gui.OpenURL(model.setup_guide_url)
         end
     end
 

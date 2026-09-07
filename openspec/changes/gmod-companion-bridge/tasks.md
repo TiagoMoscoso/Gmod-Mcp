@@ -16,7 +16,7 @@
 
 - [x] 3.1 Detect Companion missing, handshake failure, and Companion death after connect and verify status becomes not-ready in each case
 - [x] 3.2 Show the in-game popup (or equivalent) with copyable MCP URL only when Companion MCP is actually listening and verify FR-UX-001 copy works on a healthy session
-- [ ] 3.3 When Companion is missing, show not-ready plus Setup Guide to GitHub and verify no live URL is advertised (FR-UX-003, SPK-HTTP-001)
+- [x] 3.3 When Companion is missing, show not-ready plus Setup Guide to GitHub and verify no live URL is advertised (FR-UX-003, SPK-HTTP-001)
 - [ ] 3.4 Ensure advertised URL host is loopback and verify it is never `0.0.0.0`
 
 ## 4. Tests

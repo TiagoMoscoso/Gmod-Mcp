@@ -133,6 +133,10 @@ if realm == "client" then
         io.stderr:write("offline popup must not expose a copyable MCP URL\n")
         os.exit(1)
     end
+    if not offlineModel.setup_guide_enabled or offlineModel.setup_guide_url == nil then
+        io.stderr:write("offline popup must expose the Setup Guide target\n")
+        os.exit(1)
+    end
 
     local onlineModel = AI_PLAYERS.BuildCompanionPopupModel(
         AI_PLAYERS.CompanionState.CONNECTED,
@@ -140,6 +144,10 @@ if realm == "client" then
     )
     if not onlineModel.copy_enabled or onlineModel.mcp_url ~= "http://127.0.0.1:8765/mcp" then
         io.stderr:write("online popup must expose a copyable MCP URL\n")
+        os.exit(1)
+    end
+    if onlineModel.setup_guide_enabled then
+        io.stderr:write("online popup must not prefer the Setup Guide over the live URL\n")
         os.exit(1)
     end
 end

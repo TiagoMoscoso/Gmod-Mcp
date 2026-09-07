@@ -151,6 +151,12 @@ function M.install(luaRoot, realm)
     function SetClipboardText(value)
         M.clipboard = value
     end
+
+    gui = {}
+
+    function gui.OpenURL(value)
+        M.openedUrl = value
+    end
 end
 
 return M
