@@ -1,0 +1,211 @@
+# =============================================================================
+# OpenSpec project configuration
+# =============================================================================
+# Location: openspec/config.yaml (this file).
+# Schema:   https://openspec.dev/docs/configuration/config-yaml
+#
+# How this file is used
+# ---------------------
+# OpenSpec injects `context` into every artifact, apply, and archive prompt.
+# `rules` are appended only to the named artifact's built-in guidance.
+# `operations` guide apply/archive execution; they do not rewrite templates.
+#
+# Keep this file as planning context, not a second copy of docs/.
+# Product truth lives in docs/. Read those files when a change needs detail.
+# Invalid keys are dropped with a warning; they never fail a command.
+#
+# Edit policy
+# -----------
+# - Add a fact here only if it should shape every change (language, architecture
+#   non-negotiables, MVP vs v2, engineering bar).
+# - Do not paste full requirement lists, JSON schemas, or open-question answers.
+# - Keep rules short. Verbose rules make artifact quality worse.
+# =============================================================================
+
+# Default workflow: proposal → specs / design → tasks → apply → archive.
+# Do not fork a custom schema unless the artifact set itself must change.
+schema: spec-driven
+
+# -----------------------------------------------------------------------------
+# Project context
+# Injected into every artifact and into apply/archive. Limit: 50 KB.
+# -----------------------------------------------------------------------------
+context: |
+  Language
+  - Write all OpenSpec artifacts, code, comments, docs, commit messages, and
+    public UI copy in English. This is a public open-source project.
+  - Keep product terms from docs/glossary.md: AI Player, Agent, Agent ID,
+    Companion, Controller, Capability, GameAdapter, MCP, semantic action.
+
+  Product
+  - Provisional name: GMod AI Players. Public name is Open (OQ-NAME-001).
+  - Pitch: a Garry's Mod addon/framework that lets players attach external AI
+    agents, via MCP, to in-game characters that perceive a filtered world and
+    act through high-level semantic actions. GMod owns motor control.
+  - Audiences: sandbox players, server operators, addon developers, agent authors.
+  - Dual distribution: GitHub is the full monorepo; Steam Workshop ships only
+    the GLua addon (GMA). Companion and docs never go inside the GMA.
+
+  Current stage
+  - The repository is specification-first. Implementation lands through OpenSpec
+    changes. Do not treat empty trees as a license to invent product scope.
+  - Source of truth: docs/ (vision, FRs, NFRs, ADRs, MVP, v2 backlog, open
+    questions). Cite IDs (FR-BOT-001, ADR-002, OQ-MCP-001) instead of restating
+    whole documents.
+
+  Status labels (must be respected)
+  - Defined: implement against this unless a later ADR supersedes it.
+  - Proposed: recommended default; may change after a spike. Do not freeze it
+    as if it were Defined.
+  - Hypothesis: needs a spike. Do not build product features to "work around" it.
+  - Future / v2: out of the current change unless the change is explicitly that phase.
+  - Open: must not be silently decided. Track in docs/requirements/open-questions.md.
+
+  Layers (do not collapse these)
+  - Agent: external MCP client (Claude Code, Codex, or any MCP client). Not in-repo.
+  - Companion: out-of-process host (Python 3.12 candidate). Hosts MCP. Bridges to GMod.
+  - GLua addon (`addon/`): gameplay, registry, controllers, UX. Workshop payload.
+  - C++ native (`native/`): Future voice capture only. Never gameplay or MCP.
+
+  Architecture non-negotiables (Defined / Accepted ADRs)
+  - MCP is the only agent-facing API. No vendor SDK in GLua. No Claude- or
+    OpenAI-specific tools. (ADR-003, NFR-ARCH-003)
+  - Cognition ≠ motor control. Agents issue semantic actions; GMod controllers
+    own navmesh, PathFollower, StartCommand / CUserCmd, aiming, arrival. (ADR-002)
+  - Tools are character-agnostic and take `agent_id`. Never `walter_move`.
+  - Capability-based agency: missing capability → reject, do not execute.
+  - Sandbox first. DarkRP / Helix are GameAdapters, not core types. (ADR-004)
+  - C++ extends GLua; it does not replace it. (ADR-001)
+  - MVP cognition is Model A (external MCP client only). v2 must add Model C
+    (optional Companion autonomy loops on the same verbs). Model B is rejected.
+    (ADR-007, docs/planning/v2-backlog.md)
+  - Proposed: Companion hosts MCP, e.g. http://127.0.0.1:8765/mcp (ADR-005).
+    Bind loopback for local Sandbox. Do not default to 0.0.0.0.
+
+  Forbidden (never add, even in a "debug" proposal, without a new ADR)
+  - execute_lua, shell, eval, run_console_command, or equivalents.
+  - Frame-level input tools: press_w, move_mouse, press_attack, lua_run.
+  - Shipping API keys, LLM vendor secrets, or an unauthenticated public MCP bind.
+  - Putting Companion, Python, native binaries, or docs inside the Workshop GMA.
+
+  Phasing
+  - MVP vertical slice (gm_construct): spawn inactive AI NPC, Tool Gun bind
+    (name + context), MCP popup, chat round-trip, say, follow, then combat
+    (equip_weapon, attack) without MCP aim tools. See docs/planning/mvp.md.
+  - MVP tools: list_agents, get_agent, get_agent_status, observe, get_self,
+    get_recent_events, move_to, follow, look_at, stop, say, equip_weapon,
+    attack, stop_attack.
+  - Long actions are async: accept work, report completion via events
+    (target_reached, action_failed, player_said, …).
+  - v2 (required later, not MVP): Companion autonomy loops, pluggable provider
+    adapters, Tool Gun playermodel, male/female voice preset. Keep providers/
+    empty until a v2 change.
+  - Future: STT, native voice capture, persistent memory, NPC↔NPC
+    ConversationManager, DarkRP/Helix verbs.
+  - If a change is only useful for unattended loops, playermodel picking, or
+    voice presets, it belongs in v2, not the vertical slice.
+
+  Engine facts (constraints, not preferences)
+  - Vanilla GLua cannot host a robust TCP/HTTP MCP server → Companion hosts MCP.
+  - GMod may block private-IP HTTP on listen/SP; transport is Open (OQ-TRN-001).
+  - player.CreateNextBot needs a player slot and fails in true singleplayer.
+    Embodiment is Open (OQ-BOT-001). Do not silently pick and freeze it.
+  - Pathfinding depends on the map navmesh. Missing mesh: document, do not teleport.
+  - License SPDX is Open (OQ-DIST-001). Do not invent MIT/GPL in a change.
+
+  Proposed monorepo (Workshop-extractable)
+    addon/        GLua GMA candidate (addon.json + lua/)
+    companion/    MCP host (GitHub only)
+    tests/        Companion and protocol tests (no GMod required for unit tests)
+    docs/         specification
+    native/       omit until voice
+    openspec/     this planning system
+
+  Engineering bar (open-source, production-quality)
+  - SOLID: one reason to change per module; extend via adapters/capabilities/
+    new controllers, not by editing the dispatcher into a god object; depend on
+    protocols and interfaces (MCP tools, GameAdapter, registry), not on vendor
+    SDKs or DarkRP types.
+  - Clean code: small functions, intention-revealing names, no dead code, no
+    commented-out leftovers, no magic strings for agent_id/tool names.
+  - Design patterns where they fit, never as decoration:
+      Adapter     GameAdapter (Sandbox now; DarkRP/Helix later)
+      Command     semantic actions accepted asynchronously
+      Strategy    Movement / Combat / Look controllers
+      Registry    agent_id → AI Player
+      Observer    game events → get_recent_events / observe
+      Facade      MCP tool surface in front of the bridge
+  - Comments explain why, invariants, and non-obvious engine constraints.
+    Do not narrate what the next line does. Public modules and MCP tools need
+    brief doc comments (purpose, params, errors, phase: MVP / v2 / Future).
+  - Tests prove behavior (acceptance from specs), not implementation trivia.
+    Companion tests must not require Garry's Mod.
+  - Conventional Commits in English (feat, fix, docs, refactor, test, chore).
+  - Fail closed on protocol mismatch, missing Companion, or denied capability.
+
+  Capability IDs for delta specs
+  - Use `<layer>/<capability>`: repo/…, addon/…, companion/…, protocol/….
+  - Match existing names when modifying (e.g. companion/mcp-server).
+
+# -----------------------------------------------------------------------------
+# Per-artifact rules
+# Keys are spec-driven artifact ids: proposal, specs, design, tasks.
+# Each bullet is appended to OpenSpec's built-in instruction for that artifact.
+# -----------------------------------------------------------------------------
+# Quote every item. YAML treats an unquoted "key: value" list entry as a map,
+# and OpenSpec then drops the whole artifact rule list ("must be an array of strings").
+rules:
+  proposal:
+    - "Write in English. Keep the proposal scoped to one change; aim under 500 words."
+    - "Structure: Why, What Changes, Capabilities (New / Modified), Impact."
+    - "Always include Non-goals. Explicitly exclude v2/Future work and forbidden tools when relevant."
+    - "Cite FR/NFR/ADR/OQ IDs. Do not close an Open question; list it under Impact or Non-goals."
+    - "Name the layer(s) touched: addon/, companion/, tests/, docs/. Never mix Workshop GLua with Companion Python in a way that would put Python inside the GMA."
+    - "If the change is only useful for Model C loops, playermodel, or voice presets, say so and stop: that is v2."
+
+  specs:
+    - "Write requirements in English as SHALL statements with Given/When/Then scenarios."
+    - "One capability folder per concern. IDs: <layer>/<capability> (repo, addon, companion, protocol)."
+    - "Cover happy path, rejection (unknown agent_id, capability_denied, invalid_state), and disconnect/fail-closed when the capability touches MCP or lifecycle."
+    - "Tools take agent_id. Long actions are async. Perception is filtered. Do not specify frame-level input."
+    - "Do not invent tools outside docs/product/scope.md for the change's phase."
+    - "Mark Proposed vs Defined. Open items stay Open; scenarios must not depend on an invented answer."
+
+  design:
+    - "Write in English. Record decisions, alternatives not chosen, and trade-offs — not a line-by-line tutorial."
+    - "Show module boundaries that respect SOLID: MCP facade, registry, controllers, GameAdapter, bridge. No vendor SDK in GLua."
+    - "Call out patterns actually used (Adapter, Command, Strategy, Registry, Observer, Facade) in one sentence each, only if they appear."
+    - "Preserve dual distribution: what lands in addon/ vs companion/ vs tests/."
+    - "Document public APIs, protocol version, error shapes, and test strategy. Comments/docs in the implementation MUST stay in English."
+    - "List Open questions that this change does not resolve. Do not pick SPDX, TTS vendor, or embodiment unless the change's job is that spike."
+
+  tasks:
+    - "Write tasks in English as small, ordered, checkable steps (roughly 2 hours or less)."
+    - "Group by layer (addon, companion, tests, docs). Include tests and English documentation updates in the same change that ships behavior."
+    - "Every MCP or controller task includes a rejection or fail-closed case, not only the happy path."
+    - "Do not add providers/, TTS, playermodel picker, LICENSE, or native/ unless the change is explicitly that work."
+    - "End with a validation step (tests or a documented manual GMod check). Do not require a commit per task unless the user asked for commits."
+
+# -----------------------------------------------------------------------------
+# Operation guidance (apply and archive only)
+# Advisory: does not replace OpenSpec built-in apply/archive instructions.
+# -----------------------------------------------------------------------------
+operations:
+  apply:
+    guidance:
+      - "Implement only what the change's tasks.md lists. Do not sneak in v2, Future, or while-we-are-here refactors."
+      - "Follow SOLID, clean code, and the patterns named in design.md. Prefer extracting a controller/adapter/registry over growing a god module."
+      - "All new code, comments, and user-facing strings in English. Comments explain why and invariants."
+      - "Do not add execute_lua, shell, eval, frame-level input, vendor SDKs in GLua, or secrets."
+      - "Keep addon/ Workshop-safe: no Companion source, Python, docs, or native binaries in the GMA tree."
+      - "Add or update tests with the behavior, not after a pile of unmarked tasks. Companion tests must run without Garry's Mod."
+      - "If a task is blocked on an Open question, stop and record the OQ id; do not invent a lock."
+      - "Mark a task complete only after its tests or documented check pass."
+
+  archive:
+    guidance:
+      - "Merge delta specs into openspec/specs/ without dropping surviving scenarios."
+      - "Summarize what shipped, which layers changed, and which OQs remain open."
+      - "If docs/ drifted (MVP tools, component layout, protocol version), update the relevant docs in English in the same archive pass or list them as follow-up."
+      - "Do not treat archive as a chance to decide Open questions or start v2 work."
+      - "Confirm forbidden tools are still absent from the MCP surface before finishing."
